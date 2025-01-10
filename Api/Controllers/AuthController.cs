@@ -15,7 +15,7 @@ namespace Api.Controllers
         {
             var user = await authService.RegisterAsync(request);
             if (user is null)
-                return BadRequest("Username already exists.");
+                return Conflict("Username already exists.");
 
             return Ok(user);
         }

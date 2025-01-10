@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Core.Interfaces;
 using Infrastructure.Data;
@@ -35,6 +36,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
+
+CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
+CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

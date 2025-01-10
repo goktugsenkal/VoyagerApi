@@ -7,6 +7,7 @@ public class VoyagerUser : BaseEntity
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string Bio { get; set; } = string.Empty;
+    public string ImageUrl { get; set; } = string.Empty;
 
     public int FollowerCount { get; set; }
     public int FollowingCount { get; set; }
@@ -22,7 +23,7 @@ public class VoyagerUser : BaseEntity
     public bool EmailConfirmed { get; set; }
     public string PasswordHash { get; set; } = string.Empty;
 
-    public string PhoneNumber { get; set; }
+    public string PhoneNumber { get; set; } = string.Empty;
     public bool PhoneNumberConfirmed { get; set; }
 
     public int AccessFailedCount { get; set; }
@@ -31,4 +32,6 @@ public class VoyagerUser : BaseEntity
     
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiryTime { get; set; }
+
+    public ICollection<Voyage> Voyages { get; set; }
 }

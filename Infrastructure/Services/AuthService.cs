@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Core.Dtos;
+using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
 using Infrastructure.Data;
@@ -15,7 +16,7 @@ namespace Infrastructure.Services;
 
 public class AuthService(DataContext context, IConfiguration configuration) : IAuthService
     {
-        public async Task<TokenResponseDto?> LoginAsync(VoyagerUserDto request)
+        public async Task<TokenResponseDto?> LoginAsync(LoginModel request)
         {
             var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
             if (user is null)
@@ -40,14 +41,25 @@ public class AuthService(DataContext context, IConfiguration configuration) : IA
             };
         }
 
-        public async Task<VoyagerUser?> RegisterAsync(VoyagerUserDto request)
+        public async Task<VoyagerUser?> RegisterAsync(RegisterModel request)
         {
             if (await context.Users.AnyAsync(u => u.Username == request.Username))
             {
                 return null;
             }
 
-            var user = new VoyagerUser();
+            var user = new VoyagerUser
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Username = request.Username,
+                NormalizedUsername = request.Username.Normalize().ToUpper(),
+                Email = request.Email,
+                NormalizedEmail = request.Email.Normalize().ToUpper(),
+                Bio = request.Bio,
+                PhoneNumber = request.PhoneNumber,
+                CreatedAt = DateTime.UtcNow
+            };
             var hashedPassword = new PasswordHasher<VoyagerUser>()
                 .HashPassword(user, request.Password);
 
@@ -103,8 +115,7 @@ public class AuthService(DataContext context, IConfiguration configuration) : IA
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
 
             var key = new SymmetricSecurityKey(

@@ -1,4 +1,5 @@
 using Core.Dtos;
+using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -11,7 +12,7 @@ namespace Api.Controllers
     public class AuthController(IAuthService authService) : ControllerBase
     {
         [HttpPost("register")]
-        public async Task<ActionResult<VoyagerUser>> Register(VoyagerUserDto request)
+        public async Task<ActionResult<VoyagerUser>> Register(RegisterModel request)
         {
             var user = await authService.RegisterAsync(request);
             if (user is null)
@@ -21,7 +22,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<TokenResponseDto>> Login(VoyagerUserDto request)
+        public async Task<ActionResult<TokenResponseDto>> Login(LoginModel request)
         {
             var result = await authService.LoginAsync(request);
             if (result is null)

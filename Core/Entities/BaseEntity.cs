@@ -1,6 +1,4 @@
-using System;
-
-namespace Core.Models;
+namespace Core.Entities;
 
 public class BaseEntity
 {

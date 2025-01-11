@@ -12,11 +12,11 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.UseIdentityColumns();
-        
+
         modelBuilder.Entity<Voyage>()
             .HasOne<VoyagerUser>(v => v.User)
-            .WithMany()
-            .HasForeignKey(v => v.UserId);
+            .WithMany(u => u.Voyages)
+            .HasForeignKey(v => v.VoyagerUserId);
 
         modelBuilder.Entity<Stop>()
             .HasOne<Voyage>(s => s.Voyage)

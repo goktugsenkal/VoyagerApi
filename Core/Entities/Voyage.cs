@@ -19,13 +19,13 @@ public class Voyage : BaseEntity
     public Currency Currency { get; set; }
     public int ExpectedPrice { get; set; }
     public int ActualPrice { get; set; }
-    
-    public string ThumbnailUrl { get; set; }
-    public List<string> ImageUrls { get; set; }
+
+    public string ThumbnailUrl { get; set; } = string.Empty;
+    public List<string> ImageUrls { get; set; } = [];
 
     public bool IsArchived { get; set; }
     
-    public Guid UserId { get; set; }
+    public Guid VoyagerUserId { get; set; }
     
     // nav
     public ICollection<Stop> Stops { get; set; } // one (voyage) - many (stops)

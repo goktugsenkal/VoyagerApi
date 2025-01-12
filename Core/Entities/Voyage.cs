@@ -15,6 +15,8 @@ public class Voyage : BaseEntity
     public DateTime EndDate { get; set; }
     
     public int StopCount { get; set; }
+    public int LikeCount { get; set; }
+    public int CommentCount { get; set; }
 
     public Currency Currency { get; set; }
     public int ExpectedPrice { get; set; }
@@ -29,6 +31,9 @@ public class Voyage : BaseEntity
     
     // nav
     public ICollection<Stop?> Stops { get; set; } // one (voyage) - many (stops)
+    public ICollection<Like?> Likes { get; set; } // one (voyage) - many (likes)
+    public ICollection<Comment?> Comments  { get; set; } // one (voyage) - many (comments)
+    
     [JsonIgnore] // prevent circular serialization
     public VoyagerUser User { get; set; } // many (voyages) - one (user)
 }

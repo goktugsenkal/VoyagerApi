@@ -11,5 +11,7 @@ public class CreateStopModel
     public int DistanceToNext { get; set; }
     public int ArrivalTimeToNext { get; set; }
     public TransportationType TransportationTypeToNextStop { get; set; }
-    public string ImageUrl { get; set; }
+    
+    // should this be removed from here??
+    //public string ImageUrl { get; set; } 
 }

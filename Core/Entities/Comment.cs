@@ -8,6 +8,11 @@ public class Comment : BaseEntity
     /// The content of the comment.
     /// </summary>
     public string Content { get; set; }
+
+    /// <summary>
+    /// Number of likes this comment has gotten
+    /// </summary>
+    public int LikeCount { get; set; }
     
     /// <summary>
     /// Foreign key referencing the VoyagerUser who created the comment.

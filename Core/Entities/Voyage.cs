@@ -28,7 +28,7 @@ public class Voyage : BaseEntity
     public Guid VoyagerUserId { get; set; }
     
     // nav
-    public ICollection<Stop> Stops { get; set; } // one (voyage) - many (stops)
+    public ICollection<Stop?> Stops { get; set; } // one (voyage) - many (stops)
     [JsonIgnore] // prevent circular serialization
     public VoyagerUser User { get; set; } // many (voyages) - one (user)
 }

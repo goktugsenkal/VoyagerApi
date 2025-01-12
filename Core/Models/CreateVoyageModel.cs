@@ -1,3 +1,4 @@
+using Core.Entities;
 using Core.Enums;
 
 namespace Core.Models;
@@ -12,7 +13,15 @@ public class CreateVoyageModel
     public DateTime EndDate { get; set; }
     
     public int StopCount { get; set; }
-    
-    public int ExpectedPrice { get; set; }
+
     public Currency Currency { get; set; }
+    public int ExpectedPrice { get; set; }
+    public int ActualPrice { get; set; } = -1;
+    
+    // probably will have a different endpoint to upload the images
+    // so not necessary in the voyage creation endpoint
+    //public string ThumbnailUrl { get; set; } = string.Empty;
+    //public List<string> ImageUrls { get; set; } = [];
+
+    public ICollection<Stop?> Stops { get; set; } = [];
 }

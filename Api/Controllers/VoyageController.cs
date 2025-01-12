@@ -34,11 +34,9 @@ public class VoyageController(IVoyageService voyageService) : ControllerBase
         
         try
         {
-            // add User's ID to the Voyage model's VoyagerUserId FK
-            createVoyageModel.VoyagerUserId = voyagerUserId;
-            
-            // call VoyageService to do the saving of the Voyage and Stops from createVoyageModel with userId
-            await voyageService.AddVoyageAsync(createVoyageModel);
+            // call VoyageService to do the saving of the Voyage and Stops
+            // give down voyageUserId that we got from the token's claims
+            await voyageService.AddVoyageAsync(createVoyageModel, voyagerUserId);
             
             return Ok("Voyage created successfully.");
         }

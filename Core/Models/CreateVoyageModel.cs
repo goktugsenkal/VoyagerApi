@@ -23,5 +23,8 @@ public class CreateVoyageModel
     //public string ThumbnailUrl { get; set; } = string.Empty;
     //public List<string> ImageUrls { get; set; } = [];
 
-    public ICollection<Stop?> Stops { get; set; } = [];
+    // voyage craete model takes in create stop model
+    public ICollection<CreateStopModel> Stops { get; set; } = [];
+
+    public Guid VoyagerUserId { get; set; }
 }

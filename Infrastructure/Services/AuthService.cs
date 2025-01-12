@@ -121,14 +121,14 @@ public class AuthService(DataContext context, IConfiguration configuration) : IA
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(configuration.GetValue<string>("AppSettings:Token")!));
 
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
 
             var tokenDescriptor = new JwtSecurityToken(
                 issuer: configuration.GetValue<string>("AppSettings:Issuer"),
                 audience: configuration.GetValue<string>("AppSettings:Audience"),
                 claims: claims,
                 expires: DateTime.UtcNow.AddDays(1),
-                signingCredentials: creds
+                signingCredentials: credentials
             );
 
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);

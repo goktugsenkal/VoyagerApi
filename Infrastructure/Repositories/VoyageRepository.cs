@@ -16,7 +16,7 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
         throw new NotImplementedException();
     }
 
-    public async Task CreateVoyage(Voyage voyage)
+    public async Task CreateVoyageAsync(Voyage voyage)
     {
         voyage.CreatedAt = DateTime.UtcNow;
         dataContext.Voyages.Add(voyage);

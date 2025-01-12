@@ -16,12 +16,13 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
         throw new NotImplementedException();
     }
 
-    public async Task CreateVoyageAsync(Voyage voyage)
+    public async Task AddAsync(Voyage voyage)
     {
         voyage.CreatedAt = DateTime.UtcNow;
-        dataContext.Voyages.Add(voyage);
+        await dataContext.Voyages.AddAsync(voyage);
         await dataContext.SaveChangesAsync();
     }
+
 
     public async Task UpdateVoyage(Voyage voyage)
     {

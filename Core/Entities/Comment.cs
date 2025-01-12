@@ -4,18 +4,36 @@ namespace Core.Entities;
 
 public class Comment : BaseEntity
 {
+    /// <summary>
+    /// The content of the comment.
+    /// </summary>
     public string Content { get; set; }
     
-    // foreign key UserId references Users table
+    /// <summary>
+    /// Foreign key referencing the VoyagerUser who created the comment.
+    /// </summary>
     public Guid VoyagerUserId { get; set; }
-    
-    // foreign key VoyageId references Voyages table
+
+    /// <summary>
+    /// Foreign key referencing the Voyage associated with the comment.
+    /// </summary>
     public Guid VoyageId { get; set; }
-    
-    // navigation to Voyage
+
+    /// <summary>
+    /// Navigation property to the associated Voyage.
+    /// </summary>
     [JsonIgnore] 
-    public Voyage Voyage  { get; set; }
-    // navigation to User
+    public Voyage Voyage { get; set; }
+
+    /// <summary>
+    /// Navigation property to the associated VoyagerUser.
+    /// </summary>
     [JsonIgnore] 
-    public VoyagerUser VoyagerUser  { get; set; }
+    public VoyagerUser VoyagerUser { get; set; }
+
+    /// <summary>
+    /// Navigation property for the likes associated with this comment.
+    /// </summary>
+    [JsonIgnore]
+    public ICollection<Like> Likes { get; set; } = [];
 }

@@ -1,19 +1,20 @@
 using Core.Entities;
 using Core.Interfaces;
 using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories;
 
-public class VoyageRepository(DataContext dataContext) : IVoyageRepository
+public class VoyageRepository(DataContext dataContext, IStopRepository stopRepository) : IVoyageRepository
 {
     public async Task<ICollection<Voyage>> GetAllVoyages()
     {
         throw new NotImplementedException();
     }
 
-    public async Task<Voyage> GetVoyageById(Guid voyageId)
+    public async Task<Voyage?> GetVoyageById(Guid voyageId)
     {
-        throw new NotImplementedException();
+        return await dataContext.Voyages.FirstOrDefaultAsync(v => v.Id == voyageId);
     }
 
     public async Task AddAsync(Voyage voyage)

@@ -14,8 +14,8 @@ public class Stop : BaseEntity
     public int DistanceToNext { get; set; }
     public int ArrivalTimeToNext { get; set; }
     public TransportationType TransportationTypeToNextStop { get; set; }
-    
-    public string ImageUrl { get; set; }
+
+    public string ImageUrl { get; set; } = "";
     
     
     public Guid VoyageId { get; set; } // 

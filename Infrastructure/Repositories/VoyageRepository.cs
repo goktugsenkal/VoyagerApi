@@ -32,6 +32,7 @@ public class VoyageRepository(DataContext dataContext, IStopRepository stopRepos
 
     public async Task DeleteVoyage(Voyage voyage)
     {
-        throw new NotImplementedException();
+        dataContext.Voyages.Remove(voyage);
+        await dataContext.SaveChangesAsync();
     }
 }

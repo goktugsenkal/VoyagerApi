@@ -48,7 +48,6 @@ public class VoyageService
             ArrivalTimeToNext = stop.ArrivalTimeToNext,
             TransportationTypeToNextStop = stop.TransportationTypeToNextStop,
             ImageUrl = stop.ImageUrl,
-            CreatedAt = stop.CreatedAt,
             VoyageId = voyage.Id // set fk, voyageId
         }).ToList();
         

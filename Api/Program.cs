@@ -36,6 +36,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IVoyageRepository, VoyageRepository>();
+builder.Services.AddScoped<IVoyageService, VoyageService>();
+builder.Services.AddScoped<IStopRepository, StopRepository>();
+
 
 var app = builder.Build();
 

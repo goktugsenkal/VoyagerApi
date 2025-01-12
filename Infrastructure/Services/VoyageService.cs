@@ -15,8 +15,8 @@ public class VoyageService
     /// 3. Maps CreateStopModel->Stop and saves them with relation to the voyage.
     /// </summary>
     /// <param name="createVoyageModel">CreateVoyageModel</param>
-    /// <param name="voyageUserId"></param>
-    public async Task AddVoyageAsync(CreateVoyageModel createVoyageModel, Guid voyageUserId)
+    /// <param name="voyagerUserId"></param>
+    public async Task AddVoyageAsync(CreateVoyageModel createVoyageModel, Guid voyagerUserId)
     {
         // map request to Voyage entity
         var voyage = new Voyage 
@@ -32,7 +32,7 @@ public class VoyageService
             Currency = createVoyageModel.Currency,
             ExpectedPrice = createVoyageModel.ExpectedPrice,
             ActualPrice = createVoyageModel.ActualPrice,
-            VoyagerUserId = voyageUserId
+            VoyagerUserId = voyagerUserId
         };
 
         // save the Voyage to get its id

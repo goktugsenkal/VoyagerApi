@@ -4,5 +4,5 @@ namespace Core.Interfaces;
 
 public interface IVoyageService
 {
-    Task AddVoyageAsync(CreateVoyageModel createVoyageModel);
+    Task AddVoyageAsync(CreateVoyageModel createVoyageModel, Guid voyagerUserId);
 }

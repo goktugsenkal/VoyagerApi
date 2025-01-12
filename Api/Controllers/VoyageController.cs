@@ -9,7 +9,7 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("voyage")]
-public class VoyageController(IVoyageRepository voyageRepository) : ControllerBase
+public class VoyageController(IVoyageService voyageService) : ControllerBase
 {
     /// <summary>
     /// Endpoint that creates a plan or a voyage, based on {"isComplete": true}
@@ -18,42 +18,33 @@ public class VoyageController(IVoyageRepository voyageRepository) : ControllerBa
     /// <returns>Voyage</returns>
     [HttpPost]
     [Authorize]
-    public async Task<ActionResult<Voyage>> CreateVoyage(CreateVoyageModel createVoyageModel)
+    public async Task<IActionResult> CreateVoyage(CreateVoyageModel createVoyageModel)
     {
-        // extract the user ID from the claims
-        var userIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        // check Authorization header, then try to find the User's ID in the claims 
+        var voyagerUserIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
         
-        // return 401 if userId not found in token
-        if (userIdClaim == null)
+        // return 401 if User's ID can't be found
+        if (voyagerUserIdClaim == null)
         {
             return Unauthorized("User ID not found in the token.");
         }
         
-        // try parsing userId to a Guid, return 400 bad request if parsing can't be done 
-        if (!Guid.TryParse(userIdClaim.Value, out var userId))
+        // parse User's ID into a Guid
+        var voyagerUserId = Guid.Parse(voyagerUserIdClaim.Value);
+        
+        try
         {
-            return BadRequest("Invalid User ID format.");
+            // add User's ID to the Voyage model's VoyagerUserId FK
+            createVoyageModel.VoyagerUserId = voyagerUserId;
+            
+            // call VoyageService to do the saving of the Voyage and Stops from createVoyageModel with userId
+            await voyageService.AddVoyageAsync(createVoyageModel);
+            
+            return Ok("Voyage created successfully.");
         }
-        
-        // create a voyage with the request model
-        var voyage = new Voyage
+        catch (Exception ex)
         {
-            Title = createVoyageModel.Title,
-            Description = createVoyageModel.Description,
-            LocationName = createVoyageModel.LocationName,
-            StartDate = createVoyageModel.StartDate,
-            EndDate = createVoyageModel.EndDate,
-            StopCount = createVoyageModel.StopCount,
-            Currency = createVoyageModel.Currency,
-            ExpectedPrice = createVoyageModel.ExpectedPrice,
-            VoyagerUserId = userId
-        };
-        
-        // pass voyage to the service layer to be added to the database, shouldn't fail.
-        // error management will solve giving clear responses in case the request fails
-        // at lower layers.
-        await voyageRepository.CreateVoyageAsync(voyage);
-        return Ok(voyage);
+            return StatusCode(500, $"An error occurred: {ex.Message}");
+        }
     }
-
 }

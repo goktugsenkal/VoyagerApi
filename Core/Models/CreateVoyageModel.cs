@@ -25,6 +25,4 @@ public class CreateVoyageModel
 
     // voyage craete model takes in create stop model
     public ICollection<CreateStopModel> Stops { get; set; } = [];
-
-    public Guid VoyagerUserId { get; set; }
 }

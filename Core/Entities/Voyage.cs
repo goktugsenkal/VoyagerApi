@@ -32,7 +32,7 @@ public class Voyage : BaseEntity
     // nav
     public ICollection<Stop?> Stops { get; set; } // one (voyage) - many (stops)
     public ICollection<Like?> Likes { get; set; } // one (voyage) - many (likes)
-    public ICollection<Comment?> Comments  { get; set; } // one (voyage) - many (comments)
+    public IEnumerable<Comment>? Comments  { get; set; } // one (voyage) - many (comments)
     
     [JsonIgnore] // prevent circular serialization
     public VoyagerUser User { get; set; } // many (voyages) - one (user)

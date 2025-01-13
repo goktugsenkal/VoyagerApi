@@ -42,7 +42,7 @@ public interface ILikeService
     Task RemoveLikeFromCommentAsync(Guid commentId, Guid userId);
 
     /// <summary>
-    /// Retrieves the count of likes for a specified voyage or comment.
+    /// gets the count of likes for a specified voyage or comment.
     /// </summary>
     /// <param name="voyageId">The ID of the voyage (optional).</param>
     /// <param name="commentId">The ID of the comment (optional).</param>
@@ -50,7 +50,7 @@ public interface ILikeService
     Task<int> CountLikesAsync(Guid? voyageId, Guid? commentId);
 
     /// <summary>
-    /// Retrieves a list of likes for a specified voyage or comment.
+    /// gets a list of likes for a specified voyage or comment.
     /// </summary>
     /// <param name="voyageId">The ID of the voyage (optional).</param>
     /// <param name="commentId">The ID of the comment (optional).</param>

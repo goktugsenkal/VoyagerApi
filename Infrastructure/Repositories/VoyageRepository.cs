@@ -63,4 +63,32 @@ public class VoyageRepository(DataContext dataContext, IStopRepository stopRepos
         await dataContext.SaveChangesAsync();
         return true;
     }
+
+    public async Task<bool> IncrementCommentsAsync(Guid voyageId)
+    {
+        var voyage = await GetVoyageById(voyageId);
+        
+        if (voyage is null)
+        {
+            return false;
+        }
+        
+        voyage.CommentCount++;
+        await dataContext.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DecrementCommentsAsync(Guid voyageId)
+    {
+        var voyage = await GetVoyageById(voyageId);
+        
+        if (voyage is null)
+        {
+            return false;
+        }
+        
+        voyage.CommentCount--;
+        await dataContext.SaveChangesAsync();
+        return true;
+    }
 }

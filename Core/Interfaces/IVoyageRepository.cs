@@ -12,4 +12,7 @@ public interface IVoyageRepository
     
     Task<bool> IncrementLikesAsync(Guid voyageId);
     Task<bool> DecrementLikesAsync(Guid voyageId);
+    
+    Task<bool> IncrementCommentsAsync(Guid voyageId);
+    Task<bool> DecrementCommentsAsync(Guid voyageId);
 }

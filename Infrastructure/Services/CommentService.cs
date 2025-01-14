@@ -4,10 +4,11 @@ using Core.Models;
 
 namespace Infrastructure.Services;
 
-public class CommentService(ICommentRepository commentRepository) : ICommentService
+public class CommentService(ICommentRepository commentRepository, IVoyageRepository voyageRepository) : ICommentService
 {
     public async Task AddCommentAsync(Guid voyageId, Guid voyagerUserId, CreateCommentModel commentModel)
     {
+        // Create comment
         var comment = new Comment
         {
             VoyageId = voyageId,
@@ -18,7 +19,11 @@ public class CommentService(ICommentRepository commentRepository) : ICommentServ
         
         try
         {
-            await commentRepository.AddCommentAsync(comment);
+            // Save comment
+            await commentRepository.AddAsync(comment);
+
+            // Increment comments count
+            await voyageRepository.IncrementCommentsAsync(voyageId);
         }
         catch (Exception e)
         {
@@ -28,6 +33,25 @@ public class CommentService(ICommentRepository commentRepository) : ICommentServ
 
     public async Task DeleteCommentAsync(Guid voyageId, Guid voyagerUserId, Guid commentId)
     {
-        throw new NotImplementedException();
+        // Get comment
+        var comment = await commentRepository.GetCommentByIdAsync(commentId);
+        
+        // Check if comment exists
+        if (comment is null)
+        {
+            throw new Exception("Comment not found.");
+        }
+        
+        // Check if comment belongs to user
+        if (comment.VoyageId != voyageId || comment.VoyagerUserId != voyagerUserId)
+        {
+            throw new Exception("You are not authorized to delete this comment.");
+        }
+        
+        // Delete comment
+        await commentRepository.DeleteCommentAsync(comment);
+        
+        // Decrement comments count
+        await voyageRepository.DecrementCommentsAsync(voyageId);
     }
 }

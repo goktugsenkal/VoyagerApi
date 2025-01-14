@@ -40,6 +40,8 @@ builder.Services.AddScoped<IVoyageService, VoyageService>();
 builder.Services.AddScoped<ILikeService, LikeService>();
 builder.Services.AddScoped<IStopRepository, StopRepository>();
 builder.Services.AddScoped<ILikeRepository, LikeRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<ICommentService, CommentService>();
 
 
 var app = builder.Build();

@@ -35,4 +35,32 @@ public class VoyageRepository(DataContext dataContext, IStopRepository stopRepos
         dataContext.Voyages.Remove(voyage);
         await dataContext.SaveChangesAsync();
     }
+
+    public async Task<bool> IncrementLikesAsync(Guid voyageId)
+    {
+        var voyage = await dataContext.Voyages.FirstOrDefaultAsync(v => v.Id == voyageId);
+        
+        if (voyage is null)
+        {
+            return false;
+        }
+        
+        voyage.LikeCount++;
+        await dataContext.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DecrementLikesAsync(Guid voyageId)
+    {
+        var voyage = await dataContext.Voyages.FirstOrDefaultAsync(v => v.Id == voyageId);
+        
+        if (voyage is null)
+        {
+            return false;
+        }
+        
+        voyage.LikeCount--;
+        await dataContext.SaveChangesAsync();
+        return true;
+    }
 }

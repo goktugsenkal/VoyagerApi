@@ -9,4 +9,7 @@ public interface IVoyageRepository
     Task AddAsync(Voyage voyage);
     public Task UpdateVoyage(Voyage voyage);
     public Task DeleteVoyage(Voyage voyage);
+    
+    Task<bool> IncrementLikesAsync(Guid voyageId);
+    Task<bool> DecrementLikesAsync(Guid voyageId);
 }

@@ -4,7 +4,10 @@ using Core.Interfaces;
 
 namespace Infrastructure.Services;
 
-public class LikeService(ILikeRepository likeRepository) : ILikeService
+public class LikeService
+    (ILikeRepository likeRepository, 
+        ICommentRepository commentRepository, 
+        IVoyageRepository voyageRepository) : ILikeService
 // worst code in the world, doesn't run slow tho
 // edit: might be brilliant code, I can't decide
 {
@@ -24,6 +27,9 @@ public class LikeService(ILikeRepository likeRepository) : ILikeService
             LikeType = LikeType.Voyage,
             CreatedAt = DateTime.UtcNow
         });
+        
+        // increment the like count of the voyage
+        await voyageRepository.IncrementLikesAsync(voyageId);
     }
 
     public async Task RemoveLikeFromVoyageAsync(Guid voyageId, Guid userId)
@@ -38,6 +44,9 @@ public class LikeService(ILikeRepository likeRepository) : ILikeService
         var like = await likeRepository.GetLikeAsync(voyageId: voyageId, commentId: null, userId: userId);
         
         await likeRepository.RemoveAsync(like!); // super sure that it is not null, because I check 2 lines above
+        
+        // decrement the like count of the voyage
+        await voyageRepository.DecrementLikesAsync(voyageId);
     }
 
     public async Task AddLikeToCommentAsync(Guid commentId, Guid userId)
@@ -56,6 +65,9 @@ public class LikeService(ILikeRepository likeRepository) : ILikeService
             LikeType = LikeType.Comment,
             CreatedAt = DateTime.UtcNow
         });
+        
+        // increment the like count of the comment
+        await commentRepository.IncrementLikesAsync(commentId);
     }
 
     public async Task RemoveLikeFromCommentAsync(Guid commentId, Guid userId)
@@ -70,6 +82,9 @@ public class LikeService(ILikeRepository likeRepository) : ILikeService
         var like = await likeRepository.GetLikeAsync(voyageId: null, commentId: commentId, userId: userId);
         
         await likeRepository.RemoveAsync(like!); // super sure that it is not null, because I check 2 lines above
+        
+        // decrement the like count of the comment
+        await commentRepository.DecrementLikesAsync(commentId);
     }
 
     public async Task<int> CountLikesAsync(Guid? voyageId, Guid? commentId)
@@ -79,9 +94,15 @@ public class LikeService(ILikeRepository likeRepository) : ILikeService
         {
             throw new ArgumentException("Either voyageId or commentId must be provided.");
         }
+        
+        // make sure that not both of them are provided
+        if (voyageId.HasValue && commentId.HasValue)
+        {
+            throw new ArgumentException("Both voyageId and commentId cannot be provided together.");
+        }
 
-        // pass the shit down, 1 of them will almost definitely be null, but
-        // I should carefully check in controller
+        // pass the shit down, 1 of them will almost definitely be null
+        // which is checked thoroughly in the controller
         return await likeRepository.CountLikesAsync(voyageId, commentId);
     }
 
@@ -92,6 +113,12 @@ public class LikeService(ILikeRepository likeRepository) : ILikeService
         if (!voyageId.HasValue && !commentId.HasValue)
         {
             throw new ArgumentException("Either voyageId or commentId must be provided.");
+        }
+        
+        // make sure that not both of them are provided
+        if (voyageId.HasValue && commentId.HasValue)
+        {
+            throw new ArgumentException("Both voyageId and commentId cannot be provided together.");
         }
 
         // pass the shit down as is again

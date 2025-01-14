@@ -6,7 +6,7 @@ public interface ICommentRepository
 {
     Task<List<Comment>> GetCommentsByVoyageIdAsync(Guid voyageId);
     Task<Comment?> GetCommentByIdAsync(Guid commentId);
-    Task AddCommentAsync(Comment comment);
+    Task AddAsync(Comment comment);
     Task UpdateCommentAsync(Comment comment);
     Task DeleteCommentAsync(Comment comment);
     

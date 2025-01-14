@@ -20,9 +20,9 @@ public class CommentRepository(DataContext context) : ICommentRepository
             .FirstOrDefaultAsync(c => c.Id == commentId);
     }
 
-    public async Task AddCommentAsync(Comment comment)
+    public async Task AddAsync(Comment comment)
     {
-        context.Comments.Add(comment);
+        await context.Comments.AddAsync(comment);
         await context.SaveChangesAsync();
     }
 

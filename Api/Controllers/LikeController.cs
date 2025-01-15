@@ -17,7 +17,7 @@ public class LikeController(ILikeService likeService) : ControllerBase
     /// <returns></returns>
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> AddLikeAsync(Guid? voyageId, Guid? commentId)
+    public async Task<IActionResult> AddLikeAsync([FromQuery] Guid? voyageId, [FromQuery] Guid? commentId)
     {
         // check Authorization header, then try to find the User's ID in the claims 
         var voyagerUserIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);

@@ -7,7 +7,7 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("like")]
-public class LikeController(ILikeService likeService) : ControllerBase
+public class LikeController(ILikeService likeService) : BaseApiController
 {
     /// <summary>
     /// like a voyage
@@ -20,16 +20,13 @@ public class LikeController(ILikeService likeService) : ControllerBase
     public async Task<IActionResult> AddLikeAsync([FromQuery] Guid? voyageId, [FromQuery] Guid? commentId)
     {
         // check Authorization header, then try to find the User's ID in the claims 
-        var voyagerUserIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        var voyagerUserId = GetUserIdFromTokenClaims();
         
         // return 401 if User's ID can't be found
-        if (voyagerUserIdClaim == null)
+        if (voyagerUserId == null)
         {
             return Unauthorized("User ID not found in the token.");
         }
-        
-        // parse User's ID into a Guid
-        var voyagerUserId = Guid.Parse(voyagerUserIdClaim.Value);
         
         // if neither query parameter is provided
         if (voyageId == null && commentId == null)
@@ -48,12 +45,14 @@ public class LikeController(ILikeService likeService) : ControllerBase
             // if voyageId is provided, call likeService with voyageId and User's ID
             if (voyageId != null)
             {
-                await likeService.AddLikeToVoyageAsync(voyageId.Value, voyagerUserId);
+                await likeService.AddLikeToVoyageAsync(voyageId.Value, voyagerUserId.Value);
+                // null case is checked, so it's okay to use voyagerUserId.Value
             }
             // if commentId is provided, call likeService with commentId and User's ID
             else if (commentId != null)
             {
-                await likeService.AddLikeToCommentAsync(commentId.Value, voyagerUserId);
+                await likeService.AddLikeToCommentAsync(commentId.Value, voyagerUserId.Value);
+                // null case is checked, so it's okay to use voyagerUserId.Value
             }
             // a like will be created accordingly and added to the database
 
@@ -79,16 +78,13 @@ public class LikeController(ILikeService likeService) : ControllerBase
     public async Task<IActionResult> RemoveLikeAsync(Guid? voyageId, Guid? commentId)
     {
         // check Authorization header, then try to find the User's ID in the claims 
-        var voyagerUserIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        var voyagerUserId = GetUserIdFromTokenClaims();
         
         // return 401 if User's ID can't be found
-        if (voyagerUserIdClaim == null)
+        if (voyagerUserId == null)
         {
             return Unauthorized("User ID not found in the token.");
         }
-        
-        // parse User's ID into a Guid
-        var voyagerUserId = Guid.Parse(voyagerUserIdClaim.Value);
         
         // if neither query parameter is provided
         if (voyageId == null && commentId == null)
@@ -107,12 +103,14 @@ public class LikeController(ILikeService likeService) : ControllerBase
             // if voyageId is provided, call likeService with voyageId and User's ID
             if (voyageId != null)
             {
-                await likeService.RemoveLikeFromVoyageAsync(voyageId.Value, voyagerUserId);
+                await likeService.RemoveLikeFromVoyageAsync(voyageId.Value, voyagerUserId.Value);
+                // null case is checked, so it's okay to use voyagerUserId.Value
             }
             // if commentId is provided, call likeService with commentId and User's ID
             else if (commentId != null)
             {
-                await likeService.RemoveLikeFromCommentAsync(commentId.Value, voyagerUserId);
+                await likeService.RemoveLikeFromCommentAsync(commentId.Value, voyagerUserId.Value);
+                // null case is checked, so it's okay to use voyagerUserId.Value
             }
             // a like will be removed accordingly and updated in the database
 

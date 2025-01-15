@@ -8,7 +8,7 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("comment")]
-public class CommentController(ICommentService commentService) : ControllerBase
+public class CommentController(ICommentService commentService) : BaseApiController
 {
     /// <summary>
     /// Get comments for a given voyage.
@@ -19,7 +19,7 @@ public class CommentController(ICommentService commentService) : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetComments(Guid voyageId)
     {
-        var voyagerUserIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        var voyagerUserIdClaim = GetUserIdFromTokenClaims();
         
         // return 401 if User's ID can't be found
         if (voyagerUserIdClaim == null)
@@ -27,11 +27,9 @@ public class CommentController(ICommentService commentService) : ControllerBase
             return Unauthorized("User ID not found in the token.");
         }
         
-        // parse User's ID into a Guid
-        var voyagerUserId = Guid.Parse(voyagerUserIdClaim.Value);
-        
         var comments = await commentService.GetCommentsByVoyageIdAsync(voyageId);
-        
+        // null case is checked, so it's okay to use voyagerUserId.Value
+
         return Ok(comments);
     }
     
@@ -46,23 +44,21 @@ public class CommentController(ICommentService commentService) : ControllerBase
     public async Task<IActionResult> AddComment(Guid voyageId, CreateCommentModel commentModel)
     {
         // check Authorization header, then try to find the User's ID in the claims 
-        var voyagerUserIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        var voyagerUserId = GetUserIdFromTokenClaims();
         
         // return 401 if User's ID can't be found
-        if (voyagerUserIdClaim == null)
+        if (voyagerUserId == null)
         {
             return Unauthorized("User ID not found in the token.");
         }
-        
-        // parse User's ID into a Guid
-        var voyagerUserId = Guid.Parse(voyagerUserIdClaim.Value);
         
         try
         {
             // call VoyageService to do the saving of the Voyage and Stops
             // give down voyageUserId that we got from the token's claims
-            await commentService.AddCommentAsync(voyageId, voyagerUserId, commentModel);
-            
+            await commentService.AddCommentAsync(voyageId, voyagerUserId.Value, commentModel);
+            // null case is checked, so it's okay to use voyagerUserId.Value
+
             return Ok("Comment created successfully.");
         }
         catch (Exception ex)
@@ -84,23 +80,21 @@ public class CommentController(ICommentService commentService) : ControllerBase
     public async Task<IActionResult> UpdateComment(Guid voyageId, Guid commentId, CreateCommentModel commentModel)
     {
         // check Authorization header, then try to find the User's ID in the claims 
-        var voyagerUserIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        var voyagerUserId = GetUserIdFromTokenClaims();
         
         // return 401 if User's ID can't be found
-        if (voyagerUserIdClaim == null)
+        if (voyagerUserId == null)
         {
             return Unauthorized("User ID not found in the token.");
         }
-        
-        // parse User's ID into a Guid
-        var voyagerUserId = Guid.Parse(voyagerUserIdClaim.Value);
         
         try
         {
             // call VoyageService to do the saving of the Voyage and Stops
             // give down voyageUserId that we got from the token's claims
-            await commentService.UpdateCommentAsync(voyageId, commentId, voyagerUserId, commentModel);
-            
+            await commentService.UpdateCommentAsync(voyageId, commentId, voyagerUserId.Value, commentModel);
+            // null case is checked, so it's okay to use voyagerUserId.Value
+
             return Ok("Comment updated successfully.");
         }
         catch (Exception ex)
@@ -121,22 +115,20 @@ public class CommentController(ICommentService commentService) : ControllerBase
     public async Task<IActionResult> DeleteComment(Guid commentId)
     {
         // check Authorization header, then try to find the User's ID in the claims 
-        var voyagerUserIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        var voyagerUserId = GetUserIdFromTokenClaims();
         
         // return 401 if User's ID can't be found
-        if (voyagerUserIdClaim == null)
+        if (voyagerUserId == null)
         {
             return Unauthorized("User ID not found in the token.");
         }
-        
-        // parse User's ID into a Guid
-        var voyagerUserId = Guid.Parse(voyagerUserIdClaim.Value);
         
         try
         {
             // call VoyageService to do the saving of the Voyage and Stops
             // give down voyageUserId that we got from the token's claims
-            await commentService.DeleteCommentAsync(commentId, voyagerUserId);
+            await commentService.DeleteCommentAsync(commentId, voyagerUserId.Value);
+            // null case is checked, so it's okay to use voyagerUserId.Value
             
             return Ok("Comment deleted successfully.");
         }

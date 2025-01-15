@@ -19,6 +19,12 @@ public class CommentRepository(DataContext context) : ICommentRepository
         return await context.Comments
             .FirstOrDefaultAsync(c => c.Id == commentId);
     }
+    
+    public async Task UpdateAsync(Comment comment)
+    {
+        context.Comments.Update(comment);
+        await context.SaveChangesAsync();
+    }
 
     public async Task AddAsync(Comment comment)
     {

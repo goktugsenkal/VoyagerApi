@@ -6,6 +6,11 @@ namespace Infrastructure.Services;
 
 public class CommentService(ICommentRepository commentRepository, IVoyageRepository voyageRepository) : ICommentService
 {
+    public async Task<List<Comment>> GetCommentsByVoyageIdAsync(Guid voyageId)
+    {
+        return await commentRepository.GetCommentsAsync(voyageId);
+    }
+
     public async Task AddCommentAsync(Guid voyageId, Guid voyagerUserId, CreateCommentModel commentModel)
     {
         // Create comment

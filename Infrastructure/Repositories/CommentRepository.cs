@@ -7,7 +7,7 @@ namespace Infrastructure.Repositories;
 
 public class CommentRepository(DataContext context) : ICommentRepository
 {
-    public async Task<List<Comment>> GetCommentsByVoyageIdAsync(Guid voyageId)
+    public async Task<List<Comment>> GetCommentsAsync(Guid voyageId)
     {
         return await context.Comments
             .Where(c => c.VoyageId == voyageId)
@@ -30,11 +30,6 @@ public class CommentRepository(DataContext context) : ICommentRepository
     {
         await context.Comments.AddAsync(comment);
         await context.SaveChangesAsync();
-    }
-
-    public async Task UpdateCommentAsync(Comment comment)
-    {
-        throw new NotImplementedException();
     }
 
     public async Task DeleteCommentAsync(Comment comment)

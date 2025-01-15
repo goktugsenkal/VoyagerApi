@@ -30,6 +30,7 @@ public class LikeRepository(DataContext context) : ILikeRepository
     /// </summary>
     public async Task AddAsync(Like like)
     {
+        like.CreatedAt = DateTime.UtcNow;
         await context.Likes.AddAsync(like);
         await context.SaveChangesAsync();
     }

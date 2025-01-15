@@ -25,7 +25,7 @@ public class LikeService
             VoyageId = voyageId,
             VoyagerUserId = userId,
             LikeType = LikeType.Voyage,
-            CreatedAt = DateTime.UtcNow
+            // CreatedAt is to be added at the repository layer
         });
         
         // increment the like count of the voyage
@@ -63,7 +63,7 @@ public class LikeService
             CommentId = commentId,
             VoyagerUserId = userId,
             LikeType = LikeType.Comment,
-            CreatedAt = DateTime.UtcNow
+            // CreatedAt is to be added at the repository layer
         });
         
         // increment the like count of the comment

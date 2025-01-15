@@ -19,7 +19,7 @@ public class CommentService(ICommentRepository commentRepository, IVoyageReposit
             VoyageId = voyageId,
             VoyagerUserId = voyagerUserId,
             Content = commentModel.Content,
-            CreatedAt = DateTime.UtcNow
+            // CreatedAt is to be added at the repository layer
         };
         
         try

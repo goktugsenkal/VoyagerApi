@@ -36,7 +36,7 @@ public class CommentService(ICommentRepository commentRepository, IVoyageReposit
         } 
     }
 
-    public async Task DeleteCommentAsync(Guid voyageId, Guid voyagerUserId, Guid commentId)
+    public async Task UpdateCommentAsync(Guid voyageId, Guid voyagerUserId, Guid commentId, CreateCommentModel commentModel)
     {
         // Get comment
         var comment = await commentRepository.GetCommentByIdAsync(commentId);
@@ -50,6 +50,30 @@ public class CommentService(ICommentRepository commentRepository, IVoyageReposit
         // Check if comment belongs to user
         if (comment.VoyageId != voyageId || comment.VoyagerUserId != voyagerUserId)
         {
+            throw new Exception("You are not authorized to update this comment.");
+        }
+        
+        // Update comment
+        comment.Content = commentModel.Content;
+        
+        // Save comment
+        await commentRepository.UpdateAsync(comment);
+    }
+
+    public async Task DeleteCommentAsync(Guid voyagerUserId, Guid commentId)
+    {
+        // Get comment
+        var comment = await commentRepository.GetCommentByIdAsync(commentId);
+        
+        // Check if comment exists
+        if (comment is null)
+        {
+            throw new Exception("Comment not found.");
+        }
+        
+        // Check if comment belongs to user
+        if (comment.VoyagerUserId != voyagerUserId)
+        {
             throw new Exception("You are not authorized to delete this comment.");
         }
         
@@ -57,6 +81,6 @@ public class CommentService(ICommentRepository commentRepository, IVoyageReposit
         await commentRepository.DeleteCommentAsync(comment);
         
         // Decrement comments count
-        await voyageRepository.DecrementCommentsAsync(voyageId);
+        await voyageRepository.DecrementCommentsAsync(comment.VoyageId);
     }
 }

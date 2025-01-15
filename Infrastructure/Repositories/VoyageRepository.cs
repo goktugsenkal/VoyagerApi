@@ -9,7 +9,11 @@ public class VoyageRepository(DataContext dataContext, IStopRepository stopRepos
 {
     public async Task<ICollection<Voyage>> GetAllVoyages()
     {
-        throw new NotImplementedException();
+        // for now, return ALL voyages in the database
+        // at the 1000 user mark, I will rewrite this
+        
+        // todo: add pagination
+        return await dataContext.Voyages.ToListAsync();
     }
 
     public async Task<Voyage?> GetVoyageById(Guid voyageId)
@@ -27,7 +31,8 @@ public class VoyageRepository(DataContext dataContext, IStopRepository stopRepos
 
     public async Task UpdateVoyage(Voyage voyage)
     {
-        throw new NotImplementedException();
+        dataContext.Voyages.Update(voyage);
+        await dataContext.SaveChangesAsync();
     }
 
     public async Task DeleteVoyage(Voyage voyage)

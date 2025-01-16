@@ -11,14 +11,14 @@ public interface IVoyageRepository
     /// Gets all voyages from the database.
     /// </summary>
     /// <returns>A collection of voyages.</returns>
-    public Task<ICollection<Voyage>> GetAllVoyages();
+    public Task<ICollection<Voyage>> GetAllAsync();
 
     /// <summary>
     /// Gets a voyage by ID from the database.
     /// </summary>
     /// <param name="voyageId">The ID of the voyage to get.</param>
     /// <returns>The voyage if found, otherwise <see langword="null"/>.</returns>
-    public Task<Voyage?> GetVoyageById(Guid voyageId);
+    public Task<Voyage?> GetByIdAsync(Guid voyageId);
 
     /// <summary>
     /// Adds a new voyage to the database.
@@ -30,13 +30,13 @@ public interface IVoyageRepository
     /// Updates a voyage in the database.
     /// </summary>
     /// <param name="voyage">The voyage to update.</param>
-    public Task UpdateVoyage(Voyage voyage);
+    public Task UpdateAsync(Voyage voyage);
 
     /// <summary>
     /// Deletes a voyage from the database.
     /// </summary>
     /// <param name="voyage">The voyage to delete.</param>
-    public Task DeleteVoyage(Voyage voyage);
+    public Task DeleteAsync(Voyage voyage);
 
     /// <summary>
     /// Increments the like count of a voyage in the database. To be used with the like service

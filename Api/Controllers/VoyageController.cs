@@ -1,3 +1,4 @@
+using Core.Dtos;
 using Core.Interfaces;
 using Core.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -40,5 +41,94 @@ public class VoyageController(IVoyageService voyageService) : BaseApiController
         {
             return StatusCode(500, $"An error occurred: {ex.Message}");
         }
+    }
+    
+    /// <summary>
+    /// Get all voyages
+    /// </summary>
+    /// <returns>List of Voyage</returns>
+    [HttpGet]
+    [Authorize]
+    public async Task<ActionResult<ICollection<VoyageDto>>> GetAllVoyagesAsync()
+    {
+        var voyagerUserId = GetUserIdFromTokenClaims();
+        
+        // return 401 if User's ID can't be found
+        if (voyagerUserId == null)
+        {
+            return Unauthorized("User ID not found in token claims.");
+        }
+        
+        return await voyageService.GetAllVoyagesAsync();
+    }
+    
+    /// <summary>
+    /// Get a specific voyage by its Id
+    /// </summary>
+    /// <param name="voyageId"></param>
+    /// <returns>Voyage</returns>
+    [HttpGet("{voyageId:guid}")]
+    [Authorize]
+    public async Task<ActionResult<VoyageDto>> GetVoyage(Guid voyageId)
+    {
+        var voyagerUserId = GetUserIdFromTokenClaims();
+        
+        // return 401 if User's ID can't be found
+        if (voyagerUserId == null)
+        {
+            return Unauthorized("User ID not found in token claims.");
+        }
+        
+        var voyage = await voyageService.GetVoyageByIdAsync(voyageId);
+        
+        if (voyage == null)
+        {
+            return NotFound("Voyage not found.");
+        }
+        
+        return voyage;
+    }
+    
+    /// <summary>
+    /// Update a specific voyage
+    /// </summary>
+    /// <param name="voyageId"></param>
+    /// <param name="updateVoyageModel"></param>
+    /// <returns>Voyage</returns>
+    [HttpPut("{voyageId:guid}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateVoyage(Guid voyageId, UpdateVoyageModel updateVoyageModel)
+    {
+        var voyage = await voyageService.GetVoyageByIdAsync(voyageId);
+        
+        if (voyage == null)
+        {
+            return NotFound("Voyage not found.");
+        }
+        
+        await voyageService.UpdateVoyageAsync(voyageId, updateVoyageModel);
+        
+        return Ok("Voyage updated successfully.");
+    }
+    
+    /// <summary>
+    /// Delete a specific voyage
+    /// </summary>
+    /// <param name="voyageId"></param>
+    /// <returns></returns>
+    [HttpDelete("{voyageId:guid}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteVoyage(Guid voyageId)
+    {
+        var voyage = await voyageService.GetVoyageByIdAsync(voyageId);
+        
+        if (voyage == null)
+        {
+            return NotFound("Voyage not found.");
+        }
+        
+        await voyageService.DeleteVoyageAsync(voyageId);
+        
+        return Ok("Voyage deleted successfully.");
     }
 }

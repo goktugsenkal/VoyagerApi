@@ -1,4 +1,5 @@
 using Core.Entities;
+using Core.Models;
 
 namespace Core.Interfaces;
 
@@ -11,7 +12,7 @@ public interface IVoyageRepository
     /// Gets all voyages from the database.
     /// </summary>
     /// <returns>A collection of voyages.</returns>
-    public Task<ICollection<Voyage>> GetAllAsync();
+    public PagedList<Voyage> GetAllAsPagedList(int pageNumber, int pageSize);
 
     /// <summary>
     /// Gets a voyage by ID from the database.

@@ -1,5 +1,6 @@
 using Core.Entities;
 using Core.Interfaces;
+using Core.Models;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,14 +10,18 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
 // (IStopRepository stopRepository) was being injected in here. idk why.
 // add it back if necessary.
 {
-    public async Task<ICollection<Voyage>> GetAllAsync()
+    public PagedList<Voyage> GetAllAsPagedList(int pageNumber, int pageSize)
     {
-        // for now, return ALL voyages in the database
-        
-        // todo: add pagination
-        return await dataContext.Voyages.ToListAsync();
-        
-        // at the 1000 user mark, I will rewrite this
+        // get voyages DbSet as a queryable
+        var voyages = dataContext.Voyages
+                // include related entities
+            .Include(v => v.Stops)
+            .Include(v => v.Comments)
+            .Include(v => v.Likes)
+            .AsQueryable();
+
+        // create a PagedList and return it
+        return PagedList<Voyage>.CreatePagedList(voyages, pageNumber, pageSize);
     }
 
     public async Task<Voyage?> GetByIdAsync(Guid voyageId)

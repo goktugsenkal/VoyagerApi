@@ -40,12 +40,5 @@ namespace Api.Controllers
 
             return Ok(result);
         }
-
-        [Authorize]
-        [HttpGet]
-        public IActionResult AuthenticatedOnlyEndpoint()
-        {
-            return Ok("You are authenticated!");
-        }
     }
 }

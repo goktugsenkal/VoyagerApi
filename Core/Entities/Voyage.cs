@@ -103,7 +103,7 @@ public class Voyage : BaseEntity
     /// <summary>
     /// Navigation property for the comments associated with the voyage.
     /// </summary>
-    public IEnumerable<Comment>? Comments { get; set; }
+    public IEnumerable<Comment?> Comments { get; set; }
 
     /// <summary>
     /// The user associated with the voyage.

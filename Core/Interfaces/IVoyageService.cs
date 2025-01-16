@@ -5,7 +5,7 @@ namespace Core.Interfaces;
 
 public interface IVoyageService
 {
-    Task<List<VoyageDto>> GetAllVoyagesAsync();
+    Task<PagedList<VoyageDto>> GetAllVoyagesAsync(int pageNumber, int pageSize);
     Task<VoyageDto?> GetVoyageByIdAsync(Guid voyageId);
     Task AddVoyageAsync(CreateVoyageModel createVoyageModel, Guid voyagerUserId);
     Task UpdateVoyageAsync(Guid voyageId, UpdateVoyageModel updateVoyageModel);

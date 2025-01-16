@@ -49,7 +49,8 @@ public class VoyageController(IVoyageService voyageService) : BaseApiController
     /// <returns>List of Voyage</returns>
     [HttpGet]
     [Authorize]
-    public async Task<ActionResult<ICollection<VoyageDto>>> GetAllVoyagesAsync()
+    public async Task<ActionResult<ICollection<VoyageDto>>> GetAllVoyagesAsync
+        ([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         var voyagerUserId = GetUserIdFromTokenClaims();
         
@@ -59,7 +60,7 @@ public class VoyageController(IVoyageService voyageService) : BaseApiController
             return Unauthorized("User ID not found in token claims.");
         }
         
-        return await voyageService.GetAllVoyagesAsync();
+        return Ok(await voyageService.GetAllVoyagesAsync(pageNumber, pageSize));
     }
     
     /// <summary>

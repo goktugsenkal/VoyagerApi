@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Controllers;
 
 [ApiController]
-[Route("comment")]
+[Route("comments")]
 public class CommentController(ICommentService commentService) : BaseApiController
 {
     /// <summary>

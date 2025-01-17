@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Controllers;
 
 [ApiController]
-[Route("like")]
+[Route("likes")]
 public class LikeController(ILikeService likeService) : BaseApiController
 {
     /// <summary>

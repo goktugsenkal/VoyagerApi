@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Controllers;
 
 [ApiController]
-[Route("voyage")]
+[Route("voyages")]
 public class VoyageController(IVoyageService voyageService) : BaseApiController
 {
     /// <summary>

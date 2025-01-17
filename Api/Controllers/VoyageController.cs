@@ -132,4 +132,12 @@ public class VoyageController(IVoyageService voyageService) : BaseApiController
         
         return Ok("Voyage deleted successfully.");
     }
+    
+    [HttpGet("error")]
+    [Authorize]
+    // todo: remove
+    public IActionResult Error()
+    {
+        throw new Exception("This is an unhandled exception.");
+    }
 }

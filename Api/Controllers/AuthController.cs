@@ -40,5 +40,12 @@ namespace Api.Controllers
 
             return Ok(result);
         }
+        
+        [HttpGet]
+        public ActionResult<string> Get()
+        {
+            return Ok("Hello from the API!");
+        }
+        
     }
 }

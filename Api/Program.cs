@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Api.Middlewares;
 using Core.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
@@ -8,97 +9,123 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using NLog;
+using NLog.Web;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-var builder = WebApplication.CreateBuilder(args);
+var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 
-// Add services to the container.
-
-builder.Services.AddControllers();
-builder.Services.AddDbContext<DataContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddEndpointsApiExplorer(); 
-builder.Services.AddSwaggerGen(c =>
+try
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Voyager API", Version = "v0.0.5" });
+    logger.Debug("Starting application");
 
-    // Add security definition for Bearer authentication
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Description = "Please enter token as follows: `Bearer {your token}`",
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey
-    });
+    var builder = WebApplication.CreateBuilder(args);
 
-    // Add security requirement
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    // Add NLog as the logging provider
+    builder.Logging.ClearProviders();
+    builder.Logging.SetMinimumLevel(LogLevel.Trace);
+    builder.Host.UseNLog();
+
+    // Add services to the container.
+    builder.Services.AddControllers();
+    builder.Services.AddDbContext<DataContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(c =>
     {
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "Voyager API", Version = "v0.0.5" });
+
+        // Add security definition for Bearer authentication
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
-            new OpenApiSecurityScheme
+            In = ParameterLocation.Header,
+            Description = "Please enter token as follows: `Bearer {your token}`",
+            Name = "Authorization",
+            Type = SecuritySchemeType.ApiKey
+        });
+
+        // Add security requirement
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
             {
-                Reference = new OpenApiReference
+                new OpenApiSecurityScheme
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                new string[] { }
+            }
+        });
     });
-});
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
         {
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["AppSettings:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["AppSettings:Audience"],
-            ValidateLifetime = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["AppSettings:Token"]!)),
-            ValidateIssuerSigningKey = true
-        };
-    });
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = builder.Configuration["AppSettings:Issuer"],
+                ValidateAudience = true,
+                ValidAudience = builder.Configuration["AppSettings:Audience"],
+                ValidateLifetime = true,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(builder.Configuration["AppSettings:Token"]!)),
+                ValidateIssuerSigningKey = true
+            };
+        });
 
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IVoyageRepository, VoyageRepository>();
-builder.Services.AddScoped<IVoyageService, VoyageService>();
-builder.Services.AddScoped<ILikeService, LikeService>();
-builder.Services.AddScoped<IStopRepository, StopRepository>();
-builder.Services.AddScoped<ILikeRepository, LikeRepository>();
-builder.Services.AddScoped<ICommentRepository, CommentRepository>();
-builder.Services.AddScoped<ICommentService, CommentService>();
+    builder.Services.AddScoped<IAuthService, AuthService>();
+    builder.Services.AddScoped<IVoyageRepository, VoyageRepository>();
+    builder.Services.AddScoped<IVoyageService, VoyageService>();
+    builder.Services.AddScoped<ILikeService, LikeService>();
+    builder.Services.AddScoped<IStopRepository, StopRepository>();
+    builder.Services.AddScoped<ILikeRepository, LikeRepository>();
+    builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+    builder.Services.AddScoped<ICommentService, CommentService>();
 
+    var app = builder.Build();
 
-var app = builder.Build();
+    // Set culture info
+    CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
+    CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US");
 
-CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
-CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US");
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    // Enable middleware to serve Swagger UI
-    app.UseSwaggerUI(c =>
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+        });
+    }
+
+    app.UseHttpsRedirection();
+
+    app.UseMiddleware<ErrorHandlingMiddleware>();
+    app.UseMiddleware<UserLoggingMiddleware>();
+
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+    app.Lifetime.ApplicationStarted.Register(() =>
+    {
+        app.Logger.LogInformation("Swagger URL: http://localhost:5000/swagger/index.html");
+        app.Logger.LogInformation("Swagger URL: https://localhost:5001/swagger/index.html");
     });
+
+    app.Run();
 }
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Lifetime.ApplicationStarted.Register(() =>
+catch (Exception ex)
 {
-    app.Logger.LogInformation("Swagger URL: http://localhost:5000/swagger/index.html");
-    app.Logger.LogInformation("Swagger URL: https://localhost:5001/swagger/index.html");
-});
-app.Run();
+    logger.Error(ex, "Unhandled exception occurred. Application terminated.");
+    throw;
+}
+finally
+{
+    LogManager.Shutdown(); // Ensure NLog resources are properly released
+}

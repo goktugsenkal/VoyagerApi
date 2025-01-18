@@ -41,7 +41,8 @@ namespace Api.Controllers
             return Ok(result);
         }
         
-        [HttpGet]
+        [HttpGet("test")]
+        [AllowAnonymous]
         public ActionResult<string> Get()
         {
             return Ok("Hello from the API!");

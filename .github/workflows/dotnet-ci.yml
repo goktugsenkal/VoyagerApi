@@ -1,4 +1,4 @@
-name: Voyager .NET CI/CD Pipeline :(
+name: Voyager .NET CI/CD Pipeline
 
 on:
   push:

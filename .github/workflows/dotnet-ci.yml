@@ -42,7 +42,7 @@ jobs:
         ssh -o StrictHostKeyChecking=no ec2-user@ec2-13-60-234-145.eu-north-1.compute.amazonaws.com << EOF
         echo "fuck Connection successful!"
         cd /home/ec2-user/VoyagerApi
-        git pull origin main
+        git pull origin master
         dotnet publish -c Release -o /var/www/voyager
         sudo systemctl restart voyager.service
         EOF

@@ -45,7 +45,7 @@ namespace Api.Controllers
         [AllowAnonymous]
         public ActionResult<string> Get()
         {
-            return Ok("Hello from the API!");
+            return Ok("Hello from the API! CI&CD Testing.");
         }
         
     }

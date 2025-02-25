@@ -9,7 +9,7 @@ namespace Api.Controllers
 {
     [Route("auth")]
     [ApiController]
-    public class AuthController(IAuthService authService) : ControllerBase
+    public class AuthController(IAuthService authService) : BaseApiController
     {
         [HttpPost("register")]
         public async Task<ActionResult<VoyagerUser>> Register(RegisterModel request)

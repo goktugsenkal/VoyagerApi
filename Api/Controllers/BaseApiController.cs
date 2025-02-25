@@ -9,7 +9,10 @@ public class BaseApiController : ControllerBase
     protected Guid? GetUserIdFromTokenClaims()
     {
         var userIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-        
-        return userIdClaim != null ? Guid.Parse(userIdClaim.Value) : null;
+        if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var guid))
+        {
+            return guid;
+        }
+        return null;
     }
 }

@@ -71,6 +71,27 @@ public class AuthService(DataContext context, IConfiguration configuration) : IA
 
             return user;
         }
+        
+        public async Task<VoyagerUserDto?> GetUserByIdAsync(Guid id)
+        {
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            if (user is null)
+            {
+                return null;
+            }
+            
+            return new VoyagerUserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Bio = user.Bio,
+                PhoneNumber = user.PhoneNumber,
+                CreatedAt = user.CreatedAt
+            };
+        }
 
         public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestDto request)
         {

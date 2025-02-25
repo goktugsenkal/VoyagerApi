@@ -8,5 +8,6 @@ public interface IAuthService
 {
     Task<VoyagerUser?> RegisterAsync(RegisterModel request);
     Task<TokenResponseDto?> LoginAsync(LoginModel request);
+    Task<VoyagerUserDto?> GetUserByIdAsync(Guid id);
     Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestDto request);
 }

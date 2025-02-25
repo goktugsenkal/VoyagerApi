@@ -30,6 +30,22 @@ namespace Api.Controllers
 
             return Ok(result);
         }
+        
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<ActionResult<VoyagerUserDto>> Me()
+        {
+            var voyagerUserId = GetUserIdFromTokenClaims();
+            if (voyagerUserId is null)
+                return Unauthorized("User ID not found in token claims.");
+            
+            var user = await authService.GetUserByIdAsync((Guid)voyagerUserId);
+            
+            if (user is null)
+                return Unauthorized("User not found.");
+            
+            return Ok(user);
+        }
 
         [HttpPost("refresh-token")]
         public async Task<ActionResult<TokenResponseDto>> RefreshToken(RefreshTokenRequestDto request)

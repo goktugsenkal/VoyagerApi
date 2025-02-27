@@ -6,6 +6,7 @@ namespace Core.Interfaces;
 
 public interface IAuthService
 {
+    Task<CheckAvailabilityDto> CheckAvailabilityAsync(CheckAvailabilityModel request);
     Task<VoyagerUser?> RegisterAsync(RegisterModel request);
     Task<TokenResponseDto?> LoginAsync(LoginModel request);
     Task<VoyagerUserDto?> GetUserByIdAsync(Guid id);

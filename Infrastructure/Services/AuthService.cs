@@ -41,6 +41,20 @@ public class AuthService(DataContext context, IConfiguration configuration) : IA
             };
         }
 
+        public async Task<CheckAvailabilityDto> CheckAvailabilityAsync(CheckAvailabilityModel request)
+        {
+            var usernameAvailable = await context.Users.AnyAsync(u => u.Username == request.Username);
+            var emailAvailable = await context.Users.AnyAsync(u => u.Email == request.Email);
+            
+            var response = new CheckAvailabilityDto
+            {
+                EmailAvailable = !emailAvailable,
+                UsernameAvailable = !usernameAvailable
+            };
+
+            return response;
+        }
+
         public async Task<VoyagerUser?> RegisterAsync(RegisterModel request)
         {
             if (await context.Users.AnyAsync(u => u.Username == request.Username))

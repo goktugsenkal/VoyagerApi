@@ -2,7 +2,6 @@ using Core.Dtos;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
@@ -11,6 +10,13 @@ namespace Api.Controllers
     [ApiController]
     public class AuthController(IAuthService authService) : BaseApiController
     {
+        [HttpPost("check-availability")]
+        public async Task<ActionResult<CheckAvailabilityDto>> CheckAvailability(CheckAvailabilityModel request)
+        {
+            var availabilityDto = await authService.CheckAvailabilityAsync(request);
+            return Ok(availabilityDto);
+        }
+        
         [HttpPost("register")]
         public async Task<ActionResult<VoyagerUser>> Register(RegisterModel request)
         {

@@ -86,6 +86,7 @@ try
     builder.Services.AddScoped<ILikeRepository, LikeRepository>();
     builder.Services.AddScoped<ICommentRepository, CommentRepository>();
     builder.Services.AddScoped<ICommentService, CommentService>();
+    builder.Services.AddScoped<IFeedService, FeedService>();
 
     var app = builder.Build();
 

@@ -43,7 +43,7 @@ jobs:
         echo "Connection successful!"
         cd /home/ec2-user/repos/VoyagerApi
         git pull origin master
-        dotnet publish -c Release -o /var/www/voyager
+        dotnet publish /home/ec2-user/repos/VoyagerApi/VoyagerApi.csproj -c Release -o /var/www/voyager
         dotnet ef database update -s Api/ -p Infrastructure/
         sudo systemctl restart voyager.service
         EOF

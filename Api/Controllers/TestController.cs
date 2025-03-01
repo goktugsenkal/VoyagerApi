@@ -9,6 +9,6 @@ public class TestController : BaseApiController
     [HttpGet]
     public ActionResult<string> Get()
     {
-        return Ok("0.0.7");
+        return Ok("0.0.8");
     }
 }

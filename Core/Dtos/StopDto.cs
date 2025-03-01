@@ -11,6 +11,7 @@ public class StopDto
     public int DistanceToNext { get; set; }
     public int ArrivalTimeToNext { get; set; }
     public TransportationType TransportationTypeToNextStop { get; set; }
+    public bool IsFocalPoint { get; set; }
     
-    public string ImageUrl { get; set; } 
+    public List<string> ImageUrls { get; set; }
 }

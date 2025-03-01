@@ -15,8 +15,9 @@ public class Stop : BaseEntity
     public int ArrivalTimeToNext { get; set; }
     public TransportationType TransportationTypeToNextStop { get; set; }
 
-    public string ImageUrl { get; set; } = "";
+    public List<string>? ImageUrls { get; set; } = [];
     
+    public bool IsFocalPoint { get; set; }
     
     public Guid VoyageId { get; set; } // 
     // nav

@@ -10,6 +10,11 @@ public class Comment : BaseEntity
     public string Content { get; set; }
 
     /// <summary>
+    /// Whether the current user is the author of the comment
+    /// </summary>
+    public bool IsLikedByAuthor { get; set; }
+
+    /// <summary>
     /// Number of likes this comment has gotten
     /// </summary>
     public int LikeCount { get; set; }

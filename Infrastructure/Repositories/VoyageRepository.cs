@@ -18,6 +18,7 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
             .Include(v => v.Stops)
             .Include(v => v.Comments)
             .Include(v => v.Likes)
+            .OrderByDescending(v => v.CreatedAt)
             .AsQueryable();
 
         // create a PagedList and return it

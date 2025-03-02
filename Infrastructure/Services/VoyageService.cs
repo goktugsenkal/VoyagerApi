@@ -162,7 +162,9 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
                     Currency = createVoyageModel.Currency,
                     ExpectedPrice = createVoyageModel.ExpectedPrice,
                     ActualPrice = createVoyageModel.ActualPrice,
-                    VoyagerUserId = voyagerUserId
+                    VoyagerUserId = voyagerUserId,
+                    ThumbnailUrl = createVoyageModel.ThumbnailUrl,
+                    ImageUrls = createVoyageModel.ImageUrls,
                 };
 
             // save the Voyage to get its id
@@ -178,6 +180,8 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
                 DistanceToNext = stop.DistanceToNext,
                 ArrivalTimeToNext = stop.ArrivalTimeToNext,
                 TransportationTypeToNextStop = stop.TransportationTypeToNextStop,
+                ImageUrls = stop.ImageUrls,
+                IsFocalPoint = stop.IsFocalPoint,
                 VoyageId = voyage.Id // set fk, voyageId
             }).ToList();
 

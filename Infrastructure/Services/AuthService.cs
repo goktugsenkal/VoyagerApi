@@ -101,6 +101,8 @@ public class AuthService(DataContext context, IConfiguration configuration) : IA
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
+                BannerPictureUrl = user.BannerPictureUrl,
+                ProfilePictureUrl = user.ProfilePictureUrl,
                 Bio = user.Bio,
                 PhoneNumber = user.PhoneNumber,
                 CreatedAt = user.CreatedAt

@@ -11,6 +11,7 @@ public class VoyageDto
     
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
+    public bool IsCompleted { get; set; }
     
     public int LikeCount { get; set; }
     public int StopCount { get; set; }
@@ -26,6 +27,7 @@ public class VoyageDto
     public ICollection<CommentDto?> Comments { get; set; } = [];
 
     public DateTime CreatedAt { get; set; }
-    
+
+    public string VoyagerUsername { get; set; } = string.Empty;
     public Guid VoyagerUserId { get; set; }
 }

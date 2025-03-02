@@ -28,6 +28,9 @@ public class FeedService(IVoyageRepository voyageRepository,
             ExpectedPrice = voyage.ExpectedPrice,
             ActualPrice = voyage.ActualPrice,
             VoyagerUserId = voyage.VoyagerUserId,
+            ImageUrls = voyage.ImageUrls,
+            ThumbnailUrl = voyage.ThumbnailUrl,
+            CreatedAt = voyage.CreatedAt,
             // if there are stops
             Stops = voyage.Stops.Count != 0
                 // map stops to StopDtos
@@ -41,6 +44,8 @@ public class FeedService(IVoyageRepository voyageRepository,
                         DistanceToNext = stop.DistanceToNext,
                         ArrivalTimeToNext = stop.ArrivalTimeToNext,
                         TransportationTypeToNextStop = stop.TransportationTypeToNextStop,
+                        ImageUrls = stop.ImageUrls ?? [],
+                        IsFocalPoint = stop.IsFocalPoint
                     })
                     .ToList()
                 // if there are no stops, return an empty list

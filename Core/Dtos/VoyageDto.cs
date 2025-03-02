@@ -25,5 +25,7 @@ public class VoyageDto
     public ICollection<StopDto?> Stops { get; set; } = [];
     public ICollection<CommentDto?> Comments { get; set; } = [];
 
+    public DateTime CreatedAt { get; set; }
+    
     public Guid VoyagerUserId { get; set; }
 }

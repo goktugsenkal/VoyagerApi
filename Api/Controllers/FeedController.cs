@@ -1,4 +1,6 @@
+using Core.Dtos;
 using Core.Interfaces;
+using Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,7 +12,7 @@ public class FeedController(IFeedService feedService) : BaseApiController
 {
     [HttpGet]
     [Authorize]
-    public async Task<ActionResult<string>> GetFeed(int pageNumber = 1, int pageSize = 10)
+    public async Task<ActionResult<PagedList<VoyageDto>>> GetFeed(int pageNumber = 1, int pageSize = 10)
     {
         if (pageNumber < 1 || pageSize < 1 || pageSize > 20)
         {

@@ -18,10 +18,8 @@ public class CreateVoyageModel
     public int ExpectedPrice { get; set; }
     public int ActualPrice { get; set; } = -1;
     
-    // probably will have a different endpoint to upload the images
-    // so not necessary in the voyage creation endpoint
-    //public string ThumbnailUrl { get; set; } = string.Empty;
-    //public List<string> ImageUrls { get; set; } = [];
+    public string ThumbnailUrl { get; set; } = string.Empty;
+    public List<string> ImageUrls { get; set; } = [];
 
     // voyage craete model takes in create stop model
     public ICollection<CreateStopModel> Stops { get; set; } = [];

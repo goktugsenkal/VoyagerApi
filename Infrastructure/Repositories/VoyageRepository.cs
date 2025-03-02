@@ -14,7 +14,7 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
     {
         // get voyages DbSet as a queryable
         var voyages = dataContext.Voyages
-                // include related entities
+            // include related entities
             .Include(v => v.Stops)
             .Include(v => v.Comments)
             .Include(v => v.Likes)
@@ -34,6 +34,38 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
             .Include(v => v.Likes)
             .FirstOrDefaultAsync(v => v.Id == voyageId);
         // or null if there is no Voyage with the specified voyageId.
+    }
+
+    /// <summary>
+    /// shitty overhead method
+    /// </summary>
+    /// <param name="voyageId"></param>
+    /// <returns>Username</returns>
+    /// <exception cref="Exception"></exception>
+    public async Task<string> GetUsernameByVoyageIdAsync(Guid voyageId)
+    {
+        // retrieve the voyage record using the provided voyageId.
+        var voyage = await dataContext.Voyages
+            .FirstOrDefaultAsync(v => v.Id == voyageId);
+    
+        if (voyage == null)
+        {
+            // handle the case when the voyage doesn't exist.
+            throw new Exception("Voyage not found.");
+        }
+    
+        // use the VoyagerUserId to retrieve the associated user.
+        var user = await dataContext.Users
+            .FirstOrDefaultAsync(u => u.Id == voyage.VoyagerUserId);
+    
+        if (user == null)
+        {
+            // handle the case when the user is not found.
+            throw new Exception("User not found for the given voyage.");
+        }
+    
+        // return the username.
+        return user.Username;
     }
 
     public async Task AddAsync(Voyage voyage)

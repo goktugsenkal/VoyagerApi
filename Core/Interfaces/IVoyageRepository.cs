@@ -20,6 +20,13 @@ public interface IVoyageRepository
     /// <param name="voyageId">The ID of the voyage to get.</param>
     /// <returns>The voyage if found, otherwise <see langword="null"/>.</returns>
     public Task<Voyage?> GetByIdAsync(Guid voyageId);
+    
+    /// <summary>
+    /// gets username by voyage id
+    /// </summary>
+    /// <param name="voyageId"></param>
+    /// <returns></returns>
+    public Task<string> GetUsernameByVoyageIdAsync(Guid voyageId);
 
     /// <summary>
     /// Adds a new voyage to the database.

@@ -12,6 +12,6 @@ public class TestController(DataContext context) : BaseApiController
     [HttpGet]
     public ActionResult<string> Get()
     {
-        return Ok("0.1.7");
+        return Ok("0.1.7.5");
     }
 }

@@ -24,3 +24,23 @@ public class CreateVoyageModel
     // voyage craete model takes in create stop model
     public ICollection<CreateStopModel> Stops { get; set; } = [];
 }
+
+public static class VoyageExtensions
+{
+    public static Voyage ToVoyageFromCreateVoyageModel(this CreateVoyageModel createVoyageModel)
+    {
+        return new Voyage
+        {
+            Title = createVoyageModel.Title,
+            Description = createVoyageModel.Description,
+            LocationName = createVoyageModel.LocationName,
+            ExpectedPrice = createVoyageModel.ExpectedPrice,
+            Currency = createVoyageModel.Currency,
+            StartDate = createVoyageModel.StartDate,
+            EndDate = createVoyageModel.EndDate,
+            StopCount = createVoyageModel.StopCount,
+            IsCompleted = false,
+            CreatedAt = DateTime.UtcNow,
+        };
+    }
+}

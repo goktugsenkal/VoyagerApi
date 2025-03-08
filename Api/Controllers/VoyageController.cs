@@ -76,29 +76,42 @@ public class VoyageController(IVoyageService voyageService, DataContext context)
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10)
     {
-        // Start with the voyages including their stops.
-        var query = context.Voyages
-            .Include(v => v.Stops)
-            .AsQueryable();
-
-        // Apply filtering on the focal stop coordinates if any coordinate filter is provided.
-        if (latitudeMin.HasValue || latitudeMax.HasValue || longitudeMin.HasValue || longitudeMax.HasValue)
+        // Validate pagination parameters.
+        if (pageNumber < 1 || pageSize < 1)
         {
-            query = query.Where(v => v.Stops.Any(s => 
-                s.IsFocalPoint &&
-                (!latitudeMin.HasValue || s.Latitude >= latitudeMin.Value) &&
-                (!latitudeMax.HasValue || s.Latitude <= latitudeMax.Value) &&
-                (!longitudeMin.HasValue || s.Longitude >= longitudeMin.Value) &&
-                (!longitudeMax.HasValue || s.Longitude <= longitudeMax.Value)
-            ));
+            return BadRequest("Page number and page size must be greater than zero.");
         }
 
-        // Apply pagination.
-        var voyages = query
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
+        // Validate coordinate bounds.
+        if (latitudeMin.HasValue && latitudeMax.HasValue && latitudeMin.Value > latitudeMax.Value)
+        {
+            return BadRequest("latitudeMin must be less than or equal to latitudeMax.");
+        }
 
+        if (longitudeMin.HasValue && longitudeMax.HasValue && longitudeMin.Value > longitudeMax.Value)
+        {
+            return BadRequest("longitudeMin must be less than or equal to longitudeMax.");
+        }
+
+        // Validate that coordinates are within acceptable ranges.
+        if (latitudeMin.HasValue && (latitudeMin.Value < -90 || latitudeMin.Value > 90))
+        {
+            return BadRequest("latitudeMin must be between -90 and 90.");
+        }
+        if (latitudeMax.HasValue && (latitudeMax.Value < -90 || latitudeMax.Value > 90))
+        {
+            return BadRequest("latitudeMax must be between -90 and 90.");
+        }
+        if (longitudeMin.HasValue && (longitudeMin.Value < -180 || longitudeMin.Value > 180))
+        {
+            return BadRequest("longitudeMin must be between -180 and 180.");
+        }
+        if (longitudeMax.HasValue && (longitudeMax.Value < -180 || longitudeMax.Value > 180))
+        {
+            return BadRequest("longitudeMax must be between -180 and 180.");
+        }
+
+        var voyages = voyageService.GetVoyagesFiltered(latitudeMin, latitudeMax, longitudeMin, longitudeMax, pageNumber, pageSize);
         return Ok(voyages);
     }
     

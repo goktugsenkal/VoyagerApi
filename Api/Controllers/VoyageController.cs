@@ -1,14 +1,17 @@
 using Core.Dtos;
+using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
+using Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Api.Controllers;
 
 [ApiController]
 [Route("voyages")]
-public class VoyageController(IVoyageService voyageService) : BaseApiController
+public class VoyageController(IVoyageService voyageService, DataContext context) : BaseApiController
 {
     /// <summary>
     /// Endpoint that creates a plan or a voyage, based on {"isComplete": true}
@@ -61,6 +64,42 @@ public class VoyageController(IVoyageService voyageService) : BaseApiController
         }
         
         return Ok(await voyageService.GetAllVoyagesAsync(pageNumber, pageSize));
+    }
+    
+    [HttpGet("map")]
+    [Authorize]
+    public ActionResult<IEnumerable<Voyage>> GetVoyagesFiltered(
+        [FromQuery] double? latitudeMin,
+        [FromQuery] double? latitudeMax,
+        [FromQuery] double? longitudeMin,
+        [FromQuery] double? longitudeMax,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        // Start with the voyages including their stops.
+        var query = context.Voyages
+            .Include(v => v.Stops)
+            .AsQueryable();
+
+        // Apply filtering on the focal stop coordinates if any coordinate filter is provided.
+        if (latitudeMin.HasValue || latitudeMax.HasValue || longitudeMin.HasValue || longitudeMax.HasValue)
+        {
+            query = query.Where(v => v.Stops.Any(s => 
+                s.IsFocalPoint &&
+                (!latitudeMin.HasValue || s.Latitude >= latitudeMin.Value) &&
+                (!latitudeMax.HasValue || s.Latitude <= latitudeMax.Value) &&
+                (!longitudeMin.HasValue || s.Longitude >= longitudeMin.Value) &&
+                (!longitudeMax.HasValue || s.Longitude <= longitudeMax.Value)
+            ));
+        }
+
+        // Apply pagination.
+        var voyages = query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return Ok(voyages);
     }
     
     /// <summary>

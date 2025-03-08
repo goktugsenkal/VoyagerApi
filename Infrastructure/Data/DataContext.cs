@@ -20,10 +20,13 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
             .WithMany(u => u.Voyages)
             .HasForeignKey(v => v.VoyagerUserId);
 
-        modelBuilder.Entity<Stop>()
-            .HasOne<Voyage>(s => s.Voyage)
+        var stopEntity = modelBuilder.Entity<Stop>();
+
+        stopEntity.HasOne(s => s.Voyage)
             .WithMany(v => v.Stops)
             .HasForeignKey(s => s.VoyageId);
+
+        stopEntity.HasIndex(s => new { s.IsFocalPoint, s.Latitude, s.Longitude });
 
         modelBuilder.Entity<Like>(entity =>
         {

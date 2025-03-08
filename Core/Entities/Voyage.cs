@@ -11,7 +11,7 @@ namespace Core.Entities;
 public class Voyage : BaseEntity
 {
     /// <summary>
-    /// Indicates whether the voyage is completed.
+    /// Indicates whether the voyage is completed or being planned.
     /// </summary>
     public bool IsCompleted { get; set; }
 

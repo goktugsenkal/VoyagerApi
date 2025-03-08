@@ -1,3 +1,4 @@
+using Core.Dtos;
 using Core.Entities;
 using Core.Models;
 
@@ -15,11 +16,28 @@ public interface IVoyageRepository
     public PagedList<Voyage> GetAllAsPagedList(int pageNumber, int pageSize);
 
     /// <summary>
+    /// Gets voyages from the database filtered by the given latitude and longitude
+    /// ranges.
+    /// </summary>
+    /// <param name="latitudeMin">The minimum latitude to filter by.</param>
+    /// <param name="latitudeMax">The maximum latitude to filter by.</param>
+    /// <param name="longitudeMin">The minimum longitude to filter by.</param>
+    /// <param name="longitudeMax">The maximum longitude to filter by.</param>
+    /// <param name="pageNumber">The page number to retrieve.</param>
+    /// <param name="pageSize">The number of items per page.</param>
+    /// <returns>A collection of voyages.</returns>
+    PagedList<Voyage> GetVoyagesFiltered(double? latitudeMin, double? latitudeMax, double? longitudeMin,
+        double? longitudeMax, int pageNumber, int pageSize);
+
+
+    /// <summary>
     /// Gets a voyage by ID from the database.
     /// </summary>
     /// <param name="voyageId">The ID of the voyage to get.</param>
     /// <returns>The voyage if found, otherwise <see langword="null"/>.</returns>
     public Task<Voyage?> GetByIdAsync(Guid voyageId);
+    
+    public Task<PagedList<Voyage>> GetVoyagesByVoyagerUserIdAsync(Guid voyagerUserId, int pageNumber, int pageSize);
     
     /// <summary>
     /// gets username by voyage id

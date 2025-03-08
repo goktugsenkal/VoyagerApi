@@ -1,3 +1,4 @@
+using Core.Dtos;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
@@ -24,6 +25,31 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
         // create a PagedList and return it
         return PagedList<Voyage>.CreatePagedList(voyages, pageNumber, pageSize);
     }
+    
+    public PagedList<Voyage> GetVoyagesFiltered(double? latitudeMin, double? latitudeMax, double? longitudeMin, double? longitudeMax, int pageNumber, int pageSize)
+    {
+        var query = dataContext.Voyages.Include(v => v.Stops).AsQueryable();
+
+        // Apply filtering if any coordinate filter is provided.
+        if (latitudeMin.HasValue || latitudeMax.HasValue || longitudeMin.HasValue || longitudeMax.HasValue)
+        {
+            query = query.Where(v => v.Stops.Any(s =>
+                s.IsFocalPoint &&
+                (!latitudeMin.HasValue || s.Latitude >= latitudeMin.Value) &&
+                (!latitudeMax.HasValue || s.Latitude <= latitudeMax.Value) &&
+                (!longitudeMin.HasValue || s.Longitude >= longitudeMin.Value) &&
+                (!longitudeMax.HasValue || s.Longitude <= longitudeMax.Value)
+            ));
+        }
+
+        // Apply pagination.
+        var voyages = query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return new PagedList<Voyage>(voyages, pageNumber, pageSize, query.Count());
+    }
 
     public async Task<Voyage?> GetByIdAsync(Guid voyageId)
     {
@@ -34,6 +60,18 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
             .Include(v => v.Likes)
             .FirstOrDefaultAsync(v => v.Id == voyageId);
         // or null if there is no Voyage with the specified voyageId.
+    }
+
+    public async Task<PagedList<Voyage>> GetVoyagesByVoyagerUserIdAsync(Guid voyagerUserId, int pageNumber, int pageSize)
+    {
+        var voyages = dataContext.Voyages
+            .Where(v => v.VoyagerUserId == voyagerUserId)
+            .Include(v => v.Stops)
+            .Include(v => v.Comments)
+            .Include(v => v.Likes)
+            .OrderByDescending(v => v.CreatedAt);
+        
+        return PagedList<Voyage>.CreatePagedList(voyages, pageNumber, pageSize);
     }
 
     /// <summary>

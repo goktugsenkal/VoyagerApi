@@ -48,7 +48,7 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
             .Take(pageSize)
             .ToList();
 
-        return new PagedList<Voyage>(voyages, pageNumber, pageSize, query.Count());
+        return new PagedList<Voyage>(voyages, query.Count(), pageNumber, pageSize);
     }
 
     public async Task<Voyage?> GetByIdAsync(Guid voyageId)

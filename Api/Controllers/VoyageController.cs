@@ -94,19 +94,19 @@ public class VoyageController(IVoyageService voyageService, DataContext context)
         }
 
         // Validate that coordinates are within acceptable ranges.
-        if (latitudeMin.HasValue && (latitudeMin.Value < -90 || latitudeMin.Value > 90))
+        if (latitudeMin is < -90 or > 90)
         {
             return BadRequest("latitudeMin must be between -90 and 90.");
         }
-        if (latitudeMax.HasValue && (latitudeMax.Value < -90 || latitudeMax.Value > 90))
+        if (latitudeMax is < -90 or > 90)
         {
             return BadRequest("latitudeMax must be between -90 and 90.");
         }
-        if (longitudeMin.HasValue && (longitudeMin.Value < -180 || longitudeMin.Value > 180))
+        if (longitudeMin is < -180 or > 180)
         {
             return BadRequest("longitudeMin must be between -180 and 180.");
         }
-        if (longitudeMax.HasValue && (longitudeMax.Value < -180 || longitudeMax.Value > 180))
+        if (longitudeMax is < -180 or > 180)
         {
             return BadRequest("longitudeMax must be between -180 and 180.");
         }

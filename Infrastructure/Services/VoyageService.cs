@@ -121,8 +121,7 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
                 // if there are no stops, return an empty list
                 : [],
             // if there are comments
-            Comments = voyage.Comments.Any()
-                // map comments to CommentDtos
+            Comments = voyage.Comments != null && voyage.Comments.Any()                // map comments to CommentDtos
                 ? voyage.Comments
                     .Select(comment => new CommentDto
                     {

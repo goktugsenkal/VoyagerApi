@@ -36,6 +36,8 @@ public class UserService(IVoyageRepository voyageRepository, DataContext context
             ExpectedPrice = voyage.ExpectedPrice,
             ActualPrice = voyage.ActualPrice,
             VoyagerUserId = voyage.VoyagerUserId,
+            IsCompleted = voyage.IsCompleted,
+            CreatedAt = voyage.CreatedAt,
             VoyagerUsername = voyageRepository.GetUsernameByVoyageIdAsync(voyage.Id).Result,
             ImageUrls = voyage.ImageUrls,
             ThumbnailUrl = voyage.ThumbnailUrl,
@@ -53,7 +55,8 @@ public class UserService(IVoyageRepository voyageRepository, DataContext context
                         ArrivalTimeToNext = stop.ArrivalTimeToNext,
                         TransportationTypeToNextStop = stop.TransportationTypeToNextStop,
                         ImageUrls = stop.ImageUrls ?? [],
-                        IsFocalPoint = stop.IsFocalPoint
+                        IsFocalPoint = stop.IsFocalPoint,
+                        CreatedAt = stop.CreatedAt
                     })
                     .ToList()
                 // if there are no stops, return an empty list

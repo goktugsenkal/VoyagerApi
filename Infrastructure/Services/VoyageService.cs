@@ -161,6 +161,8 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
             VoyagerUserId = voyage.VoyagerUserId,
             ImageUrls = voyage.ImageUrls,
             ThumbnailUrl = voyage.ThumbnailUrl,
+            IsCompleted = voyage.IsCompleted,
+            CreatedAt = voyage.CreatedAt,
             // if there are stops
             Stops = voyage.Stops.Count != 0
                 // map stops to StopDtos

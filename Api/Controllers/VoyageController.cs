@@ -11,7 +11,7 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("voyages")]
-public class VoyageController(IVoyageService voyageService, DataContext context) : BaseApiController
+public class VoyageController(IVoyageService voyageService, DataContext context, IS3Service s3Service) : BaseApiController
 {
     /// <summary>
     /// Endpoint that creates a plan or a voyage, based on {"isComplete": true}
@@ -19,32 +19,67 @@ public class VoyageController(IVoyageService voyageService, DataContext context)
     /// <param name="createVoyageModel"></param>
     /// <returns>Voyage</returns>
     [HttpPost]
-    [Authorize]
-    public async Task<IActionResult> CreateVoyage(CreateVoyageModel createVoyageModel)
+[Authorize]
+public async Task<IActionResult> CreateVoyage(CreateVoyageModel createVoyageModel)
+{
+    // Retrieve the user ID from token claims.
+    var voyagerUserId = GetUserIdFromTokenClaims();
+    
+    // Return 401 if the User's ID can't be found.
+    if (voyagerUserId == null)
     {
-        // check Authorization header, then try to find the User's ID in the claims 
-        var voyagerUserId = GetUserIdFromTokenClaims();
-        
-        // return 401 if User's ID can't be found
-        if (voyagerUserId == null)
-        {
-            return Unauthorized("User ID not found in token claims.");
-        }
-        
-        try
-        {
-            // call VoyageService to do the saving of the Voyage and Stops
-            // give down voyageUserId that we got from the token's claims
-            await voyageService.AddVoyageAsync(createVoyageModel, voyagerUserId.Value);
-            // null case is checked, so it's okay to use voyagerUserId.Value
-            
-            return Ok("Voyage created successfully.");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"An error occurred: {ex.Message}");
-        }
+        return Unauthorized("User ID not found in token claims.");
     }
+    
+    try
+    {
+        // Save the voyage (and its stops) using your VoyageService.
+        // Assume AddVoyageAsync returns the created voyage object (with an Id).
+        var voyage = await voyageService.AddVoyageAsync(createVoyageModel, voyagerUserId.Value);
+
+        // Generate pre-signed URLs for voyage images.
+        var voyageUploadUrls = new List<string>();
+        for (var i = 0; i < createVoyageModel.ImageCount; i++)
+        {
+            // Generate a unique key for each voyage image.
+            var objectKey = $"voyages/{voyage.Id}/images/image-{Guid.NewGuid()}.jpg";
+            var url = s3Service.GeneratePreSignedUrl(objectKey, TimeSpan.FromMinutes(15));
+            voyageUploadUrls.Add(url);
+        }
+
+        // Generate pre-signed URLs for each stop's images.
+        // Assuming each stop in createVoyageModel.Stops contains an ImageCount property.
+        var stopsUploadUrls = new Dictionary<int, List<string>>();
+        for (var i = 0; i < createVoyageModel.Stops.Count; i++)
+        {
+            var stop = createVoyageModel.Stops[i];
+            var stopUrls = new List<string>();
+
+            for (var j = 0; j < stop.ImageCount; j++)
+            {
+                // Create a unique key for each stop image.
+                var objectKey = $"voyages/{voyage.Id}/stops/{i}/image-{Guid.NewGuid()}.jpg";
+                var url = s3Service.GeneratePreSignedUrl(objectKey, TimeSpan.FromMinutes(1));
+                stopUrls.Add(url);
+            }
+
+            stopsUploadUrls.Add(i, stopUrls);
+        }
+
+        // Return the voyage ID along with the generated upload URLs.
+        return Ok(new 
+        { 
+            voyageId = voyage.Id, 
+            voyageUploadUrls, 
+            stopsUploadUrls 
+        });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, $"An error occurred: {ex.Message}");
+    }
+}
+
     
     /// <summary>
     /// Get all voyages

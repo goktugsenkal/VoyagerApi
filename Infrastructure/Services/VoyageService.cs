@@ -264,14 +264,14 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
     }
 
     /// <summary>
-        /// Ties together VoyageRepository and StopRepository methods for creating
-        /// 1. Creates a voyage and saves it to the Voyages table
-        /// 2. Gets its id
-        /// 3. Maps CreateStopModel->Stop and saves them with relation to the voyage.
-        /// </summary>
-        /// <param name="createVoyageModel">CreateVoyageModel</param>
-        /// <param name="voyagerUserId"></param>
-        public async Task AddVoyageAsync(CreateVoyageModel createVoyageModel, Guid voyagerUserId)
+    /// Ties together VoyageRepository and StopRepository methods for creating
+    /// 1. Creates a voyage and saves it to the Voyages table
+    /// 2. Gets its id
+    /// 3. Maps CreateStopModel->Stop and saves them with relation to the voyage.
+    /// </summary>
+    /// <param name="createVoyageModel">CreateVoyageModel</param>
+    /// <param name="voyagerUserId"></param>
+    public async Task<Voyage> AddVoyageAsync(CreateVoyageModel createVoyageModel, Guid voyagerUserId)
         {
             // map request to Voyage entity
             var voyage = new Voyage
@@ -288,8 +288,6 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
                     ExpectedPrice = createVoyageModel.ExpectedPrice,
                     ActualPrice = createVoyageModel.ActualPrice,
                     VoyagerUserId = voyagerUserId,
-                    ThumbnailUrl = createVoyageModel.ThumbnailUrl,
-                    ImageUrls = createVoyageModel.ImageUrls,
                 };
 
             // save the Voyage to get its id
@@ -302,16 +300,17 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
                 Description = stop.Description,
                 Longitude = stop.Longitude,
                 Latitude = stop.Latitude,
-                DistanceToNext = stop.DistanceToNext,
-                ArrivalTimeToNext = stop.ArrivalTimeToNext,
+                DistanceToNext = stop.DistanceToNextStop,
+                ArrivalTimeToNext = stop.ArrivalTimeToNextStop,
                 TransportationTypeToNextStop = stop.TransportationTypeToNextStop,
-                ImageUrls = stop.ImageUrls,
                 IsFocalPoint = stop.IsFocalPoint,
                 VoyageId = voyage.Id // set fk, voyageId
             }).ToList();
 
             // save stops with relation to the Voyage
             await stopRepository.AddRangeAsync(stops);
+
+            return voyage;
         }
 
         public async Task UpdateVoyageAsync(Guid voyageId, UpdateVoyageModel updateVoyageModel)

@@ -20,6 +20,7 @@ namespace Api.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<VoyagerUser>> Register(RegisterModel request)
         {
+            // todo: return VoyagerUserDto, correctly map it
             var user = await authService.RegisterAsync(request);
             if (user is null)
                 return Conflict("Username already exists.");

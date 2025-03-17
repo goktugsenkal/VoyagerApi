@@ -9,11 +9,10 @@ public class CreateStopModel
     
     public double Longitude { get; set; }
     public double Latitude { get; set; }
-    public int DistanceToNext { get; set; }
-    public int ArrivalTimeToNext { get; set; }
+    public int DistanceToNextStop { get; set; }
+    public int ArrivalTimeToNextStop { get; set; }
     public TransportationType TransportationTypeToNextStop { get; set; }
-    
-    public List<string>? ImageUrls { get; set; } = [];
+    public int ImageCount { get; set; }
     
     public bool IsFocalPoint { get; set; }
     

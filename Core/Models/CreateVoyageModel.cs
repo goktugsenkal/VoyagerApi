@@ -10,19 +10,20 @@ public class CreateVoyageModel
     public string LocationName { get; set; }
     
     public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
-    
+    public DateTime EndDate { get; set; } // todo: change to nullable
+    public bool IsCompleted { get; set; }
+
     public int StopCount { get; set; }
 
     public Currency Currency { get; set; }
     public int ExpectedPrice { get; set; }
     public int ActualPrice { get; set; } = -1;
+
+    public int ImageCount { get; set; }
     
-    public string ThumbnailUrl { get; set; } = string.Empty;
-    public List<string> ImageUrls { get; set; } = [];
 
     // voyage craete model takes in create stop model
-    public ICollection<CreateStopModel> Stops { get; set; } = [];
+    public List<CreateStopModel> Stops { get; set; } = [];
 }
 
 public static class VoyageExtensions
@@ -39,7 +40,7 @@ public static class VoyageExtensions
             StartDate = createVoyageModel.StartDate,
             EndDate = createVoyageModel.EndDate,
             StopCount = createVoyageModel.StopCount,
-            IsCompleted = false,
+            IsCompleted = createVoyageModel.IsCompleted,
             CreatedAt = DateTime.UtcNow,
         };
     }

@@ -109,6 +109,7 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
     public async Task AddAsync(Voyage voyage)
     {
         voyage.CreatedAt = DateTime.UtcNow;
+        voyage.UpdatedAt = DateTime.UtcNow;
         await dataContext.Voyages.AddAsync(voyage);
         await dataContext.SaveChangesAsync();
     }
@@ -116,6 +117,7 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
 
     public async Task UpdateAsync(Voyage voyage)
     {
+        voyage.UpdatedAt = DateTime.UtcNow;
         dataContext.Voyages.Update(voyage);
         await dataContext.SaveChangesAsync();
     }

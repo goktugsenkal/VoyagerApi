@@ -2,7 +2,7 @@ using Core.Models;
 
 namespace Core.Entities;
 
-public class VoyagerUser : BaseEntity
+public class VoyagerUser : UpdatableBaseEntity
 {
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;

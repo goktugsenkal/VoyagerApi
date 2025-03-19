@@ -22,6 +22,7 @@ public class CommentRepository(DataContext context) : ICommentRepository
     
     public async Task UpdateAsync(Comment comment)
     {
+        comment.UpdatedAt = DateTime.UtcNow;
         context.Comments.Update(comment);
         await context.SaveChangesAsync();
     }
@@ -29,6 +30,7 @@ public class CommentRepository(DataContext context) : ICommentRepository
     public async Task AddAsync(Comment comment)
     {
         comment.CreatedAt = DateTime.UtcNow;
+        comment.UpdatedAt = DateTime.UtcNow;
         await context.Comments.AddAsync(comment);
         await context.SaveChangesAsync();
     }

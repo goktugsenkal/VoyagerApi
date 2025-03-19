@@ -20,62 +20,17 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
     /// voyager user ID, and lists of stops and comments mapped to StopDto and CommentDto
     /// respectively.
     /// </returns>
-    public async Task<PagedList<VoyageDto>> GetAllVoyagesAsync(int pageNumber, int pageSize)
+    public Task<PagedList<VoyageDto>> GetAllVoyagesAsync(int pageNumber, int pageSize)
     {
         // get all voyages with paged list
         var voyages = voyageRepository.GetAllAsPagedList(pageNumber, pageSize);
 
         // map voyages to VoyageDtos
-        var voyagesDtos = voyages.Items.Select(voyage => new VoyageDto
-        {
-            Id = voyage.Id,
-            Title = voyage.Title,
-            Description = voyage.Description,
-            LocationName = voyage.LocationName,
-            StartDate = voyage.StartDate,
-            EndDate = voyage.EndDate,
-            LikeCount = voyage.LikeCount,
-            StopCount = voyage.StopCount,
-            Currency = voyage.Currency,
-            ExpectedPrice = voyage.ExpectedPrice,
-            ActualPrice = voyage.ActualPrice,
-            VoyagerUserId = voyage.VoyagerUserId,
-            ImageUrls = voyage.ImageUrls,
-            ThumbnailUrl = voyage.ThumbnailUrl,
-            // if there are stops
-            Stops = voyage.Stops.Count != 0
-                // map stops to StopDtos
-                ? voyage.Stops
-                    .Select(stop => new StopDto
-                    {
-                        Name = stop.Name,
-                        Description = stop.Description,
-                        Longitude = stop.Longitude,
-                        Latitude = stop.Latitude,
-                        DistanceToNext = stop.DistanceToNext,
-                        ArrivalTimeToNext = stop.ArrivalTimeToNext,
-                        TransportationTypeToNextStop = stop.TransportationTypeToNextStop,
-                        ImageUrls = stop.ImageUrls ?? [],
-                        IsFocalPoint = stop.IsFocalPoint
-                    })
-                    .ToList()
-                // if there are no stops, return an empty list
-                : [],
-            // if there are comments
-            Comments = voyage.Comments.Any()
-                // map comments to CommentDtos
-                ? voyage.Comments
-                    .Select(comment => new CommentDto
-                    {
-                        // map comment content to CommentDto's content
-                        Content = comment.Content
-                    }).ToList()
-                // if there are no comments, return an empty list
-                : []
-        }).ToList();
+        // and map stops to StopDtos
+        var voyageDtos = voyages.Items.Select(voyage => voyage.ToDto()).ToList();
 
         // create a PagedList and return it
-        return new PagedList<VoyageDto>(voyagesDtos, voyages.TotalCount, voyages.CurrentPage, voyages.PageSize);
+        return Task.FromResult(new PagedList<VoyageDto>(voyageDtos, voyages.TotalCount, voyages.CurrentPage, voyages.PageSize));
 
     }
 
@@ -85,55 +40,10 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
         var voyages = voyageRepository.GetVoyagesFiltered(latitudeMin, latitudeMax, longitudeMin, longitudeMax,
             pageNumber, pageSize);
 
-        var voyagesDtos = voyages.Items.Select(voyage => new VoyageDto
-        {
-            Id = voyage.Id,
-            Title = voyage.Title,
-            Description = voyage.Description,
-            LocationName = voyage.LocationName,
-            StartDate = voyage.StartDate,
-            EndDate = voyage.EndDate,
-            LikeCount = voyage.LikeCount,
-            StopCount = voyage.StopCount,
-            Currency = voyage.Currency,
-            ExpectedPrice = voyage.ExpectedPrice,
-            ActualPrice = voyage.ActualPrice,
-            VoyagerUserId = voyage.VoyagerUserId,
-            ImageUrls = voyage.ImageUrls,
-            ThumbnailUrl = voyage.ThumbnailUrl,
-            // if there are stops
-            Stops = voyage.Stops.Count != 0
-                // map stops to StopDtos
-                ? voyage.Stops
-                    .Select(stop => new StopDto
-                    {
-                        Name = stop.Name,
-                        Description = stop.Description,
-                        Longitude = stop.Longitude,
-                        Latitude = stop.Latitude,
-                        DistanceToNext = stop.DistanceToNext,
-                        ArrivalTimeToNext = stop.ArrivalTimeToNext,
-                        TransportationTypeToNextStop = stop.TransportationTypeToNextStop,
-                        ImageUrls = stop.ImageUrls ?? [],
-                        IsFocalPoint = stop.IsFocalPoint
-                    })
-                    .ToList()
-                // if there are no stops, return an empty list
-                : [],
-            // if there are comments
-            Comments = voyage.Comments != null && voyage.Comments.Any()                // map comments to CommentDtos
-                ? voyage.Comments
-                    .Select(comment => new CommentDto
-                    {
-                        // map comment content to CommentDto's content
-                        Content = comment.Content
-                    }).ToList()
-                // if there are no comments, return an empty list
-                : []
-        }).ToList();
+        var voyageDtos = voyages.Items.Select(voyage => voyage.ToDto()).ToList();
 
         // create a PagedList and return it
-        return new PagedList<VoyageDto>(voyagesDtos, voyages.TotalCount, voyages.CurrentPage, voyages.PageSize);
+        return new PagedList<VoyageDto>(voyageDtos, voyages.TotalCount, voyages.CurrentPage, voyages.PageSize);
     }
 
     public async Task<PagedList<VoyageDto>> GetVoyagesByVoyagerUserIdAsync(Guid voyagerUserId, int pageNumber,
@@ -145,55 +55,7 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
 
         var voyages = await voyageRepository.GetVoyagesByVoyagerUserIdAsync(voyagerUserId, pageNumber, pageSize);
 
-        var voyagesDtos = voyages.Items.Select(voyage => new VoyageDto
-        {
-            Id = voyage.Id,
-            Title = voyage.Title,
-            Description = voyage.Description,
-            LocationName = voyage.LocationName,
-            StartDate = voyage.StartDate,
-            EndDate = voyage.EndDate,
-            LikeCount = voyage.LikeCount,
-            StopCount = voyage.StopCount,
-            Currency = voyage.Currency,
-            ExpectedPrice = voyage.ExpectedPrice,
-            ActualPrice = voyage.ActualPrice,
-            VoyagerUserId = voyage.VoyagerUserId,
-            ImageUrls = voyage.ImageUrls,
-            ThumbnailUrl = voyage.ThumbnailUrl,
-            IsCompleted = voyage.IsCompleted,
-            CreatedAt = voyage.CreatedAt,
-            // if there are stops
-            Stops = voyage.Stops.Count != 0
-                // map stops to StopDtos
-                ? voyage.Stops
-                    .Select(stop => new StopDto
-                    {
-                        Name = stop.Name,
-                        Description = stop.Description,
-                        Longitude = stop.Longitude,
-                        Latitude = stop.Latitude,
-                        DistanceToNext = stop.DistanceToNext,
-                        ArrivalTimeToNext = stop.ArrivalTimeToNext,
-                        TransportationTypeToNextStop = stop.TransportationTypeToNextStop,
-                        ImageUrls = stop.ImageUrls ?? [],
-                        IsFocalPoint = stop.IsFocalPoint
-                    })
-                    .ToList()
-                // if there are no stops, return an empty list
-                : [],
-            // if there are comments
-            Comments = voyage.Comments.Any()
-                // map comments to CommentDtos
-                ? voyage.Comments
-                    .Select(comment => new CommentDto
-                    {
-                        // map comment content to CommentDto's content
-                        Content = comment.Content
-                    }).ToList()
-                // if there are no comments, return an empty list
-                : []
-        }).ToList();
+        var voyagesDtos = voyages.Items.Select(voyage => voyage.ToDto()).ToList();
 
         // create a PagedList and return it
         return new PagedList<VoyageDto>(voyagesDtos, voyages.TotalCount, voyages.CurrentPage, voyages.PageSize);
@@ -216,51 +78,8 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
         var voyage = await voyageRepository.GetByIdAsync(voyageId);
 
         // return null if no voyage is found
-        if (voyage is null)
-        {
-            return null;
-        }
-
-        // map Voyage to VoyageDto
-        return new VoyageDto
-        {
-            Id = voyage.Id,
-            Title = voyage.Title,
-            Description = voyage.Description,
-            LocationName = voyage.LocationName,
-            StartDate = voyage.StartDate,
-            EndDate = voyage.EndDate,
-            LikeCount = voyage.LikeCount,
-            StopCount = voyage.StopCount,
-            Currency = voyage.Currency,
-            ExpectedPrice = voyage.ExpectedPrice,
-            ActualPrice = voyage.ActualPrice,
-            VoyagerUserId = voyage.VoyagerUserId,
-            // map list of Stops to list of StopDtos
-            Stops = voyage.Stops.Count != 0
-                ? voyage.Stops
-                    // if there are stops, map them to StopDtos
-                    .Select(stop => new StopDto
-                    {
-                        Name = stop.Name,
-                        Description = stop.Description,
-                        Longitude = stop.Longitude,
-                        Latitude = stop.Latitude,
-                        DistanceToNext = stop.DistanceToNext,
-                        ArrivalTimeToNext = stop.ArrivalTimeToNext,
-                        TransportationTypeToNextStop = stop.TransportationTypeToNextStop,
-                    })
-                    .ToList()
-                // if there are no stops, return an empty list
-                : [],
-            Comments = voyage.Comments.Any()
-                ? voyage.Comments
-                    .Select(comment => new CommentDto
-                    {
-                        Content = comment.Content
-                    }).ToList()
-                : []
-        };
+        // if found return as voyage dto 
+        return voyage?.ToDto();
     }
 
     /// <summary>
@@ -268,43 +87,33 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
     /// 1. Creates a voyage and saves it to the Voyages table
     /// 2. Gets its id
     /// 3. Maps CreateStopModel->Stop and saves them with relation to the voyage.
+    /// refactored to use mapper 18.03.25
     /// </summary>
     /// <param name="createVoyageModel">CreateVoyageModel</param>
     /// <param name="voyagerUserId"></param>
     public async Task<Voyage> AddVoyageAsync(CreateVoyageModel createVoyageModel, Guid voyagerUserId)
         {
             // map request to Voyage entity
-            var voyage = new Voyage
-                // this voyage will get an id in the next
-                // function, "await voyageRepository.AddAsync(voyage)"
-                {
-                    Title = createVoyageModel.Title,
-                    Description = createVoyageModel.Description,
-                    LocationName = createVoyageModel.LocationName,
-                    StartDate = createVoyageModel.StartDate,
-                    EndDate = createVoyageModel.EndDate,
-                    StopCount = createVoyageModel.StopCount,
-                    Currency = createVoyageModel.Currency,
-                    ExpectedPrice = createVoyageModel.ExpectedPrice,
-                    ActualPrice = createVoyageModel.ActualPrice,
-                    VoyagerUserId = voyagerUserId,
-                };
+            var voyage = createVoyageModel.ToEntity(); 
+            
+            // assign the voyager user id
+            voyage.VoyagerUserId = voyagerUserId;
+                
+            // this voyage will get an id in the next
+            // function, "await voyageRepository.AddAsync(voyage)"
 
             // save the Voyage to get its id
             await voyageRepository.AddAsync(voyage);
 
             // map stops from CreateStopModel to Stop
-            var stops = createVoyageModel.Stops.Select(stop => new Stop
+            var stops = createVoyageModel.Stops.Select(stop =>
             {
-                Name = stop.Name,
-                Description = stop.Description,
-                Longitude = stop.Longitude,
-                Latitude = stop.Latitude,
-                DistanceToNext = stop.DistanceToNextStop,
-                ArrivalTimeToNext = stop.ArrivalTimeToNextStop,
-                TransportationTypeToNextStop = stop.TransportationTypeToNextStop,
-                IsFocalPoint = stop.IsFocalPoint,
-                VoyageId = voyage.Id // set fk, voyageId
+                // map every CreateStopModel to Stop 
+                var entity = stop.ToEntity();
+
+                // assign the voyage id
+                entity.VoyageId = voyage.Id;
+                return entity;
             }).ToList();
 
             // save stops with relation to the Voyage
@@ -315,23 +124,19 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
 
         public async Task UpdateVoyageAsync(Guid voyageId, UpdateVoyageModel updateVoyageModel)
         {
+            // get the voyage
             var voyage = await voyageRepository.GetByIdAsync(voyageId);
             
+            // check if voyage exists
             if (voyage is null)
             {
                 throw new ArgumentException("gok: no voyage found with the specified id");
             }
             
-            voyage.Title = updateVoyageModel.Title;
-            voyage.Description = updateVoyageModel.Description;
-            voyage.LocationName = updateVoyageModel.LocationName;
-            voyage.StartDate = updateVoyageModel.StartDate;
-            voyage.EndDate = updateVoyageModel.EndDate;
-            voyage.StopCount = updateVoyageModel.StopCount;
-            voyage.Currency = updateVoyageModel.Currency;
-            voyage.ExpectedPrice = updateVoyageModel.ExpectedPrice;
-            voyage.ActualPrice = updateVoyageModel.ActualPrice;
+            // update the voyage with the model
+            voyage.UpdateFromModel(updateVoyageModel);
             
+            // save the voyage
             await voyageRepository.UpdateAsync(voyage);
         }
 
@@ -341,7 +146,7 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
             
             if (voyage is null)
             {
-                throw new ArgumentException("gok: no voyage found with the specified id");
+                throw new ArgumentException("no voyage found with the specified id");
             }
             
             await voyageRepository.DeleteAsync(voyage);

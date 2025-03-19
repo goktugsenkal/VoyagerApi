@@ -44,6 +44,6 @@ jobs:
         cd /home/ec2-user/repos/VoyagerApi
         git pull origin master
         dotnet publish /home/ec2-user/repos/VoyagerApi/Api/Api.csproj -c Release -o /var/www/voyager
-        dotnet ef database update -s Api/ -p Infrastructure/
+        ASPNETCORE_ENVIRONMENT=Production dotnet ef database update -s Api/ -p Infrastructure/
         sudo systemctl restart voyager.service
         EOF

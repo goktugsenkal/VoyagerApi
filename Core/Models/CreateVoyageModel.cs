@@ -36,6 +36,7 @@ public static class VoyageExtensions
             Description = createVoyageModel.Description,
             LocationName = createVoyageModel.LocationName,
             ExpectedPrice = createVoyageModel.ExpectedPrice,
+            ActualPrice = createVoyageModel.ActualPrice,
             Currency = createVoyageModel.Currency,
             StartDate = createVoyageModel.StartDate,
             EndDate = createVoyageModel.EndDate,

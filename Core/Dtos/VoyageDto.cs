@@ -15,6 +15,7 @@ public class VoyageDto
     
     public int LikeCount { get; set; }
     public int StopCount { get; set; }
+    public int CommentCount { get; set; }
 
     public Currency Currency { get; set; }
     public int ExpectedPrice { get; set; }
@@ -27,6 +28,7 @@ public class VoyageDto
     public ICollection<CommentDto?> Comments { get; set; } = [];
 
     public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     public string VoyagerUsername { get; set; } = string.Empty;
     public Guid VoyagerUserId { get; set; }

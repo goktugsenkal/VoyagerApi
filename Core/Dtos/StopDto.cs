@@ -4,6 +4,7 @@ namespace Core.Dtos;
 
 public class StopDto
 {
+    public Guid Id { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
     public double Longitude { get; set; }
@@ -12,7 +13,10 @@ public class StopDto
     public int ArrivalTimeToNext { get; set; }
     public TransportationType TransportationTypeToNextStop { get; set; }
     public bool IsFocalPoint { get; set; }
+    public ushort OrderIndex { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     
     public List<string> ImageUrls { get; set; }
+    public ushort ImageCount { get; set; }
 }

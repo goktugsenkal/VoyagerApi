@@ -33,7 +33,7 @@ public class LikeRepository(DataContext context) : ILikeRepository
         like.CreatedAt = DateTime.UtcNow;
         await context.Likes.AddAsync(like);
         await context.SaveChangesAsync();
-    }
+    }   
 
     /// <summary>
     /// removes a like from the likes table

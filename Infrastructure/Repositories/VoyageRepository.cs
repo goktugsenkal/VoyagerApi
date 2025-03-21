@@ -11,6 +11,11 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
 // (IStopRepository stopRepository) was being injected in here. idk why.
 // add it back if necessary.
 {
+    public async Task SaveChangesAsync()
+    {
+        await dataContext.SaveChangesAsync();
+    }
+
     public PagedList<Voyage> GetAllAsPagedList(int pageNumber, int pageSize)
     {
         // get voyages DbSet as a queryable

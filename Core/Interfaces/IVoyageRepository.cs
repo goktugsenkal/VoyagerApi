@@ -9,6 +9,9 @@ namespace Core.Interfaces;
 /// </summary>
 public interface IVoyageRepository
 {
+    // save changes
+    public Task SaveChangesAsync();
+    
     /// <summary>
     /// Gets all voyages from the database.
     /// </summary>

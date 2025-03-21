@@ -16,4 +16,9 @@ public class StopRepository(DataContext dataContext) : IStopRepository
         await dataContext.Stops.AddRangeAsync(stops);
         await dataContext.SaveChangesAsync();
     }
+
+    public async Task SaveChangesAsync()
+    {
+        await dataContext.SaveChangesAsync();
+    }
 }

@@ -1,3 +1,4 @@
+using Core.Dtos;
 using Core.Models;
 
 namespace Core.Entities;
@@ -37,4 +38,34 @@ public class VoyagerUser : UpdatableBaseEntity
     public DateTime? RefreshTokenExpiryTime { get; set; }
 
     public ICollection<Voyage> Voyages { get; set; }
+}
+
+public static class VoyagerUserMapper
+{
+    public static VoyagerUserDto ToDto(this VoyagerUser user)
+    {
+        return new VoyagerUserDto
+        {
+            Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Bio = user.Bio,
+            Location = user.Location,
+            ProfilePictureUrl = user.ProfilePictureUrl,
+            BannerPictureUrl = user.BannerPictureUrl,
+            FollowerCount = user.FollowerCount,
+            FollowingCount = user.FollowingCount,
+            PlanCount = user.PlanCount,
+            CompletedPlanCount = user.CompletedPlanCount,
+            LikeCount = user.LikeCount,
+            InspiredCount = user.InspiredCount,
+            Username = user.Username,
+            Email = user.Email,
+            EmailConfirmed = user.EmailConfirmed,
+            PhoneNumber = user.PhoneNumber,
+            PhoneNumberConfirmed = user.PhoneNumberConfirmed,
+            CreatedAt = user.CreatedAt,
+            UpdatedAt = user.UpdatedAt
+        };
+    }
 }

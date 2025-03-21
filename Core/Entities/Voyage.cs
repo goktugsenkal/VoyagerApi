@@ -99,7 +99,6 @@ public static class VoyageExtensions
             ExpectedPrice = model.ExpectedPrice,
             ActualPrice = model.ActualPrice,
             Currency = model.Currency,
-            StopCount = model.StopCount,
         };
     }
 

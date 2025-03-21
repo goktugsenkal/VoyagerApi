@@ -14,7 +14,9 @@ public interface IVoyageService
     Task<PagedList<VoyageDto>> GetVoyagesByVoyagerUserIdAsync(Guid voyagerUserId, int pageNumber, int pageSize);
 
     Task<VoyageDto?> GetVoyageByIdAsync(Guid voyageId);
-    Task<Voyage> AddVoyageAsync(CreateVoyageModel createVoyageModel, Guid voyagerUserId);
+
+    Task<(Voyage Voyage, List<string> VoyageUploadUrls, List<StopUploadUrlsDto> StopsUploadUrls)>
+        AddVoyageWithMediaAsync(CreateVoyageModel createVoyageModel, Guid voyagerUserId);
     Task UpdateVoyageAsync(Guid voyageId, UpdateVoyageModel updateVoyageModel);
     Task DeleteVoyageAsync(Guid voyageId);
 }

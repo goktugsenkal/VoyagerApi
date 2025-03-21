@@ -5,7 +5,7 @@ using Core.Models;
 
 namespace Infrastructure.Services;
 
-public class VoyageService(IVoyageRepository voyageRepository, IStopRepository stopRepository)
+public class VoyageService(IVoyageRepository voyageRepository, IStopRepository stopRepository, IS3Service s3Service, IUserService userService)
     : IVoyageService
 {
 
@@ -59,8 +59,7 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
 
         // create a PagedList and return it
         return new PagedList<VoyageDto>(voyagesDtos, voyages.TotalCount, voyages.CurrentPage, voyages.PageSize);
-
-}
+    }
 
     /// <summary>
     /// Asynchronously retrieves a voyage by its ID and maps it to a VoyageDto. Maps Stops and Comments to StopDto and CommentDto.
@@ -83,44 +82,74 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
     }
 
     /// <summary>
-    /// Ties together VoyageRepository and StopRepository methods for creating
-    /// 1. Creates a voyage and saves it to the Voyages table
-    /// 2. Gets its id
-    /// 3. Maps CreateStopModel->Stop and saves them with relation to the voyage.
-    /// refactored to use mapper 18.03.25
+    /// Creates a Voyage (with its stops) and generates image keys and corresponding pre-signed URLs.
     /// </summary>
-    /// <param name="createVoyageModel">CreateVoyageModel</param>
-    /// <param name="voyagerUserId"></param>
-    public async Task<Voyage> AddVoyageAsync(CreateVoyageModel createVoyageModel, Guid voyagerUserId)
+    /// <param name="createVoyageModel">The voyage creation model containing voyage and stop details including image counts.</param>
+    /// <param name="voyagerUserId">The user ID from the token claims.</param>
+    /// <returns>A tuple containing the created Voyage, a list of pre-signed URLs for voyage images, and a list of stop upload URL DTOs.</returns>
+    public async Task<(Voyage Voyage, List<string> VoyageUploadUrls, List<StopUploadUrlsDto> StopsUploadUrls)>
+        AddVoyageWithMediaAsync(CreateVoyageModel createVoyageModel, Guid voyagerUserId)
+    {
+        // Map the request to a Voyage entity and assign the voyager user id.
+        var voyage = createVoyageModel.ToEntity();
+        voyage.VoyagerUserId = voyagerUserId;
+        voyage.VoyagerUsername = await userService.GetUserNameByIdAsync(voyagerUserId) ?? throw new Exception("User not found");
+
+        // Save the voyage to get its generate  d ID.
+        await voyageRepository.AddAsync(voyage);
+
+        // Map stops from CreateStopModel to Stop, and assign the voyage id.
+        var stops = createVoyageModel.Stops.Select(stopModel =>
         {
-            // map request to Voyage entity
-            var voyage = createVoyageModel.ToEntity(); 
-            
-            // assign the voyager user id
-            voyage.VoyagerUserId = voyagerUserId;
-                
-            // this voyage will get an id in the next
-            // function, "await voyageRepository.AddAsync(voyage)"
+            var entity = stopModel.ToEntity();
+            entity.VoyageId = voyage.Id;
+            return entity;
+        }).ToList();
 
-            // save the Voyage to get its id
-            await voyageRepository.AddAsync(voyage);
+        // Save stops with relation to the Voyage.
+        await stopRepository.AddRangeAsync(stops);
 
-            // map stops from CreateStopModel to Stop
-            var stops = createVoyageModel.Stops.Select(stop =>
-            {
-                // map every CreateStopModel to Stop 
-                var entity = stop.ToEntity();
-
-                // assign the voyage id
-                entity.VoyageId = voyage.Id;
-                return entity;
-            }).ToList();
-
-            // save stops with relation to the Voyage
-            await stopRepository.AddRangeAsync(stops);
-
-            return voyage;
+        // Generate unique keys and pre-signed URLs for voyage images.
+        var voyageUploadUrls = new List<string>();
+        
+        for (var i = 0; i < createVoyageModel.ImageCount; i++)
+        {
+            var key = $"voyages/{voyage.Id}/images/{Guid.NewGuid()}.jpg";
+            voyage.ImageUrls.Add(key);
+            var url = s3Service.GeneratePreSignedUrl(key, TimeSpan.FromMinutes(15));
+            voyageUploadUrls.Add(url);
         }
+
+        // Generate keys and pre-signed URLs for each stop's images.
+        // We assume that the order of stops in createVoyageModel.Stops corresponds to the order of persisted stops.
+        var stopsUploadUrls = new List<StopUploadUrlsDto>();
+        for (var i = 0; i < createVoyageModel.Stops.Count; i++)
+        {
+            var stopRequest = createVoyageModel.Stops[i];
+            var stopEntity = stops[i]; // Using the same order for mapping.
+            stopEntity.ImageUrls = new List<string>();
+            var stopUrls = new List<string>();
+
+            for (var j = 0; j < stopRequest.ImageCount; j++)
+            {
+                var key = $"voyages/{voyage.Id}/stops/{stopEntity.Id}/images/{Guid.NewGuid()}.jpg";
+                stopEntity.ImageUrls.Add(key);
+                var url = s3Service.GeneratePreSignedUrl(key, TimeSpan.FromMinutes(15));
+                stopUrls.Add(url);
+            }
+
+            stopsUploadUrls.Add(new StopUploadUrlsDto
+            {
+                StopId = stopEntity.Id,
+                UploadUrls = stopUrls
+            }); 
+        }
+
+        await voyageRepository.SaveChangesAsync();
+
+        // Return the voyage and the generated upload URLs.
+        return (voyage, voyageUploadUrls, stopsUploadUrls);
+    }
 
         public async Task UpdateVoyageAsync(Guid voyageId, UpdateVoyageModel updateVoyageModel)
         {

@@ -1,4 +1,5 @@
 using Core.Dtos;
+using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
 using Infrastructure.Data;
@@ -8,6 +9,12 @@ namespace Infrastructure.Services;
 
 public class UserService(IVoyageRepository voyageRepository, DataContext context) : IUserService
 {
+    public async Task<string?> GetUserNameByIdAsync(Guid id)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        return user?.Username;
+    }
+
     public async Task<PagedList<VoyageDto>> GetVoyagesOfAUserAsync(string userId, int pageNumber, int pageSize)
     {
         Guid voyagerUserId;
@@ -88,19 +95,7 @@ public class UserService(IVoyageRepository voyageRepository, DataContext context
         {
             return null;
         }
-            
-        return new VoyagerUserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            Email = user.Email,
-            BannerPictureUrl = user.BannerPictureUrl,
-            ProfilePictureUrl = user.ProfilePictureUrl,
-            Bio = user.Bio,
-            PhoneNumber = user.PhoneNumber,
-            CreatedAt = user.CreatedAt
-        };
+
+        return user.ToDto();
     }
 }

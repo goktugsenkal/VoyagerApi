@@ -29,59 +29,11 @@ public class UserService(IVoyageRepository voyageRepository, DataContext context
         
         var voyages = await voyageRepository.GetVoyagesByVoyagerUserIdAsync(voyagerUserId, pageNumber, pageSize);
         
-        var voyagesDtos = voyages.Items.Select(voyage => new VoyageDto
-        {
-            Id = voyage.Id,
-            Title = voyage.Title,
-            Description = voyage.Description,
-            LocationName = voyage.LocationName,
-            StartDate = voyage.StartDate,
-            EndDate = voyage.EndDate,
-            LikeCount = voyage.LikeCount,
-            StopCount = voyage.StopCount,
-            Currency = voyage.Currency,
-            ExpectedPrice = voyage.ExpectedPrice,
-            ActualPrice = voyage.ActualPrice,
-            VoyagerUserId = voyage.VoyagerUserId,
-            IsCompleted = voyage.IsCompleted,
-            CreatedAt = voyage.CreatedAt,
-            VoyagerUsername = voyageRepository.GetUsernameByVoyageIdAsync(voyage.Id).Result,
-            ImageUrls = voyage.ImageUrls,
-            ThumbnailUrl = voyage.ThumbnailUrl,
-            // if there are stops
-            Stops = voyage.Stops.Count != 0
-                // map stops to StopDtos
-                ? voyage.Stops
-                    .Select(stop => new StopDto
-                    {
-                        Name = stop.Name,
-                        Description = stop.Description,
-                        Longitude = stop.Longitude,
-                        Latitude = stop.Latitude,
-                        DistanceToNext = stop.DistanceToNextStop,
-                        ArrivalTimeToNext = stop.ArrivalTimeToNextStop,
-                        TransportationTypeToNextStop = stop.TransportationTypeToNextStop,
-                        ImageUrls = stop.ImageUrls ?? [],
-                        IsFocalPoint = stop.IsFocalPoint,
-                        CreatedAt = stop.CreatedAt
-                    })
-                    .ToList()
-                // if there are no stops, return an empty list
-                : [],
-            // if there are comments
-            Comments = voyage.Comments.Any()
-                // map comments to CommentDtos
-                ? voyage.Comments
-                    .Select(comment => new CommentDto
-                    {
-                        // map comment content to CommentDto's content
-                        Content = comment.Content
-                    }).ToList()
-                // if there are no comments, return an empty list
-                : []
-        }).ToList();
+        // map voyages to VoyageDtos
+        // and map stops to StopDtos
+        var voyageDtos = voyages.Items.Select(voyage => voyage.ToDto()).ToList();
 
-        return new PagedList<VoyageDto>(voyagesDtos, voyages.TotalCount, voyages.CurrentPage, voyages.PageSize);
+        return new PagedList<VoyageDto>(voyageDtos, voyages.TotalCount, voyages.CurrentPage, voyages.PageSize);
     }
     
     public async Task<VoyagerUserDto?> GetUserByIdAsync(Guid id)

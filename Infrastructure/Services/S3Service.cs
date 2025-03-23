@@ -22,7 +22,7 @@ public class S3Service : IS3Service
         // Create the S3 client using the provided credentials
         _s3Client = new AmazonS3Client(accessKey, secretKey, RegionEndpoint.GetBySystemName(region));
     }
-    public string GeneratePreSignedUrl(string objectKey, TimeSpan expiration)
+    public string GeneratePreSignedUploadUrl(string objectKey, TimeSpan expiration)
     {
         var request = new GetPreSignedUrlRequest
         {
@@ -30,6 +30,18 @@ public class S3Service : IS3Service
             Key = objectKey,
             Expires = DateTime.UtcNow.Add(expiration),
             Verb = HttpVerb.PUT  // For upload operations
+        };
+
+        return _s3Client.GetPreSignedURL(request);
+    }
+    public string GeneratePreSignedDownloadUrl(string objectKey, TimeSpan expiration)
+    {
+        var request = new GetPreSignedUrlRequest
+        {
+            BucketName = _bucketName,
+            Key = objectKey,
+            Expires = DateTime.UtcNow.Add(expiration),
+            Verb = HttpVerb.GET  // For upload operations
         };
 
         return _s3Client.GetPreSignedURL(request);

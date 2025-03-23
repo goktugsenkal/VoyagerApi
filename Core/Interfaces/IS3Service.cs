@@ -2,5 +2,6 @@ namespace Core.Interfaces;
 
 public interface IS3Service
 {
-    string GeneratePreSignedUrl(string objectKey, TimeSpan expiration);
+    string GeneratePreSignedUploadUrl(string objectKey, TimeSpan expiration);
+    string GeneratePreSignedDownloadUrl(string objectKey, TimeSpan expiration);
 }

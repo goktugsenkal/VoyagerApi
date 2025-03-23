@@ -17,7 +17,7 @@ public class Voyage : UpdatableBaseEntity
     public string LocationName { get; set; }
     
     public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
+    public DateTime? EndDate { get; set; }
     
     public int StopCount { get; set; }
     public int LikeCount { get; set; }
@@ -56,7 +56,7 @@ public static class VoyageExtensions
             Description = voyage.Description ?? string.Empty,
             LocationName = voyage.LocationName ?? string.Empty,
             StartDate = voyage.StartDate,
-            EndDate = voyage.EndDate,
+            EndDate = voyage.EndDate ?? null,
             IsCompleted = voyage.IsCompleted,
             LikeCount = voyage.LikeCount,
             StopCount = voyage.StopCount,

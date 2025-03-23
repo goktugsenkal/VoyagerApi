@@ -10,7 +10,7 @@ public class VoyageDto
     public string LocationName { get; set; }
     
     public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
+    public DateTime? EndDate { get; set; }
     public bool IsCompleted { get; set; }
     
     public int LikeCount { get; set; }

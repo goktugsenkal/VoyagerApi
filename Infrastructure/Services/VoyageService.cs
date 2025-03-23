@@ -116,7 +116,7 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
         {
             var key = $"voyages/{voyage.Id}/images/{Guid.NewGuid()}.jpg";
             voyage.ImageUrls.Add(key);
-            var url = s3Service.GeneratePreSignedUrl(key, TimeSpan.FromMinutes(15));
+            var url = s3Service.GeneratePreSignedUploadUrl(key, TimeSpan.FromMinutes(15));
             voyageUploadUrls.Add(url);
         }
 
@@ -134,7 +134,7 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
             {
                 var key = $"voyages/{voyage.Id}/stops/{stopEntity.Id}/images/{Guid.NewGuid()}.jpg";
                 stopEntity.ImageUrls.Add(key);
-                var url = s3Service.GeneratePreSignedUrl(key, TimeSpan.FromMinutes(15));
+                var url = s3Service.GeneratePreSignedUploadUrl(key, TimeSpan.FromMinutes(15));
                 stopUrls.Add(url);
             }
 

@@ -95,7 +95,7 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
         
         // Map the request to a Voyage entity and assign the voyager user id and username.
         var voyage = createVoyageModel.ToEntity()
-            .CopyWith(voyagerUserId: userId, voyagerUsername: voyagerUsername);   
+            .CopyWith(voyagerUserId: userId, voyagerUsername: voyagerUsername, stopCount: createVoyageModel.Stops.Count);   
 
         // Save the voyage to get its generated ID.
         await voyageRepository.AddAsync(voyage);

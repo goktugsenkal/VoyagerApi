@@ -11,7 +11,7 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("voyages")]
-public class VoyageController(IVoyageService voyageService, DataContext context, IS3Service s3Service) : BaseApiController
+public class VoyageController(IVoyageService voyageService) : BaseApiController
 {
     [HttpPost]
     [Authorize]

@@ -16,7 +16,7 @@ public interface IVoyageService
     Task<VoyageDto?> GetVoyageByIdAsync(Guid voyageId);
 
     Task<(Voyage Voyage, List<string> VoyageUploadUrls, List<StopUploadUrlsDto> StopsUploadUrls)>
-        AddVoyageWithMediaAsync(CreateVoyageModel createVoyageModel, Guid voyagerUserId);
+        AddVoyageWithMediaAsync(CreateVoyageModel createVoyageModel, Guid userId);
     Task UpdateVoyageAsync(Guid voyageId, UpdateVoyageModel updateVoyageModel);
     Task DeleteVoyageAsync(Guid voyageId);
 }

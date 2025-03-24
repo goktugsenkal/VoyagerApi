@@ -85,17 +85,19 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
     /// Creates a Voyage (with its stops) and generates image keys and corresponding pre-signed URLs.
     /// </summary>
     /// <param name="createVoyageModel">The voyage creation model containing voyage and stop details including image counts.</param>
-    /// <param name="voyagerUserId">The user ID from the token claims.</param>
+    /// <param name="userId">The user ID from the token claims.</param>
     /// <returns>A tuple containing the created Voyage, a list of pre-signed URLs for voyage images, and a list of stop upload URL DTOs.</returns>
     public async Task<(Voyage Voyage, List<string> VoyageUploadUrls, List<StopUploadUrlsDto> StopsUploadUrls)>
-        AddVoyageWithMediaAsync(CreateVoyageModel createVoyageModel, Guid voyagerUserId)
+        AddVoyageWithMediaAsync(CreateVoyageModel createVoyageModel, Guid userId)
     {
-        // Map the request to a Voyage entity and assign the voyager user id.
-        var voyage = createVoyageModel.ToEntity();
-        voyage.VoyagerUserId = voyagerUserId;
-        voyage.VoyagerUsername = await userService.GetUserNameByIdAsync(voyagerUserId) ?? throw new Exception("User not found");
+        // get the voyager username from the user id
+        var voyagerUsername = await userService.GetUsernameByIdAsync(userId) ?? throw new Exception("User not found");
+        
+        // Map the request to a Voyage entity and assign the voyager user id and username.
+        var voyage = createVoyageModel.ToEntity()
+            .CopyWith(voyagerUserId: userId, voyagerUsername: voyagerUsername);   
 
-        // Save the voyage to get its generate  d ID.
+        // Save the voyage to get its generated ID.
         await voyageRepository.AddAsync(voyage);
 
         // Map stops from CreateStopModel to Stop, and assign the voyage id.
@@ -142,7 +144,7 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
             {
                 StopId = stopEntity.Id,
                 UploadUrls = stopUrls
-            }); 
+            });
         }
 
         await voyageRepository.SaveChangesAsync();

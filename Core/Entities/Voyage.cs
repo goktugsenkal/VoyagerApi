@@ -151,7 +151,7 @@ public static class VoyageExtensions
     
     public static Voyage CopyWith(
         this Voyage voyage, 
-        Guid? id,
+        Guid? id = null,
         string? title = null, 
         string? description = null,
         string? locationName = null,
@@ -193,6 +193,7 @@ public static class VoyageExtensions
             VoyagerUserId = voyagerUserId ?? voyage.VoyagerUserId,
             VoyagerUsername = voyagerUsername ?? voyage.VoyagerUsername,
             CreatedAt = createdAt ?? voyage.CreatedAt,
+            UpdatedAt = updatedAt ?? voyage.UpdatedAt,
             ImageUrls = imageUrls ?? voyage.ImageUrls,
             Stops = stops ?? voyage.Stops
         };

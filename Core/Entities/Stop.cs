@@ -18,10 +18,10 @@ public class Stop : UpdatableBaseEntity
     public TransportationType TransportationTypeToNextStop { get; set; }
 
     public List<string>? ImageUrls { get; set; } = [];
-    public ushort ImageCount { get; set; }
+    public short ImageCount { get; set; }
     
     public bool IsFocalPoint { get; set; } // whether this stop is the focal point of the voyage
-    public ushort OrderIndex { get; set; } // the order in which the stops are visited
+    public short OrderIndex { get; set; } // the order in which the stops are visited
     
     public Guid VoyageId { get; set; } // foreign key
     
@@ -60,8 +60,8 @@ public static class StopMappingExtensions
             Description = model.Description,
             Longitude = model.Longitude,
             Latitude = model.Latitude,
-            DistanceToNextStop = model.DistanceToNextStop,
-            ArrivalTimeToNextStop = model.ArrivalTimeToNextStop,
+            DistanceToNextStop = (int)model.DistanceToNextStop,
+            ArrivalTimeToNextStop = (int)model.ArrivalTimeToNextStop,
             TransportationTypeToNextStop = model.TransportationTypeToNextStop,
             IsFocalPoint = model.IsFocalPoint,
             OrderIndex = model.OrderIndex,
@@ -100,9 +100,9 @@ public static class StopMappingExtensions
         int? arrivalTimeToNext = null,
         TransportationType? transportationTypeToNextStop = null,
         List<string>? imageUrls = null,
-        ushort? imageCount = null,
+        short? imageCount = null,
         bool? isFocalPoint = null,
-        ushort? orderIndex = null,
+        short? orderIndex = null,
         Guid? voyageId = null,
         Voyage? voyage = null,
         DateTime? createdAt = null,

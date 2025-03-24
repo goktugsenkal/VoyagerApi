@@ -13,10 +13,10 @@ public class StopDto
     public int ArrivalTimeToNext { get; set; }
     public TransportationType TransportationTypeToNextStop { get; set; }
     public bool IsFocalPoint { get; set; }
-    public ushort OrderIndex { get; set; }
+    public short OrderIndex { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     
     public List<string> ImageUrls { get; set; }
-    public ushort ImageCount { get; set; }
+    public short ImageCount { get; set; }
 }

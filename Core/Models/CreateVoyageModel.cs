@@ -10,7 +10,7 @@ public class CreateVoyageModel
     public string LocationName { get; set; }
     
     public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; } // todo: change to nullable
+    public DateTime? EndDate { get; set; } // todo: change to nullable
     public bool IsCompleted { get; set; }
     
     public Currency Currency { get; set; }

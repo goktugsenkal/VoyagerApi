@@ -2,6 +2,7 @@ using Core.Dtos;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
@@ -58,6 +59,41 @@ namespace Api.Controllers
                 return Unauthorized("Invalid refresh token.");
 
             return Ok(result);
+        }
+        
+        [HttpPost("request-email-verification")]
+        public async Task<IActionResult> RequestEmailVerification()
+        {
+            throw new NotImplementedException();
+        }
+
+        private async Task SendVerificationEmail(string email, string userName, string verificationLink)
+        {
+            throw new NotImplementedException();
+        }
+
+        [AllowAnonymous]
+        [HttpGet("verify-email")]
+        public async Task<IActionResult> VerifyEmail(string userId, string token)
+        {
+            throw new NotImplementedException();
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            throw new NotImplementedException();
+        }
+
+        private async Task SendResetPasswordEmailAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(string email)
+        {
+            throw new NotImplementedException();
         }
     }
 }

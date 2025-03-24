@@ -9,7 +9,7 @@ namespace Infrastructure.Services;
 
 public class UserService(IVoyageRepository voyageRepository, DataContext context) : IUserService
 {
-    public async Task<string?> GetUserNameByIdAsync(Guid id)
+    public async Task<string?> GetUsernameByIdAsync(Guid id)
     {
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
         return user?.Username;

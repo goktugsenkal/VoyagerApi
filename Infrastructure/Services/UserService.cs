@@ -14,6 +14,12 @@ public class UserService(IVoyageRepository voyageRepository, DataContext context
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
         return user?.Username;
     }
+    
+    public async Task<VoyagerUser?> GetUserByEmailAsync(string email)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        return user;
+    }
 
     public async Task<PagedList<VoyageDto>> GetVoyagesOfAUserAsync(string userId, int pageNumber, int pageSize)
     {
@@ -35,8 +41,15 @@ public class UserService(IVoyageRepository voyageRepository, DataContext context
 
         return new PagedList<VoyageDto>(voyageDtos, voyages.TotalCount, voyages.CurrentPage, voyages.PageSize);
     }
-    
-    public async Task<VoyagerUserDto?> GetUserByIdAsync(Guid id)
+
+    public async Task UpdateUserAsync(VoyagerUser user)
+    {
+        user.UpdatedAt = DateTime.UtcNow;
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<VoyagerUser?> GetUserByIdAsync(Guid id)
     {
         //
         // todo: check if user is allowed to see the other user
@@ -48,6 +61,6 @@ public class UserService(IVoyageRepository voyageRepository, DataContext context
             return null;
         }
 
-        return user.ToDto();
+        return user;
     }
 }

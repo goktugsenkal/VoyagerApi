@@ -1,11 +1,15 @@
 using System.Globalization;
 using System.Text;
 using Api.Middlewares;
+using Api.Misc;
+using Core.Constants;
+using Core.Entities;
 using Core.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -34,16 +38,21 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(c =>
     {
-        c.SwaggerDoc("v1", new OpenApiInfo { Title = "Voyager API", Version = "v0.0.5" });
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "Voyager API", Version = VersionInfo.ApiVersion });
 
+        c.DocumentFilter<AddServersDocumentFilter>();
+        
         // Add security definition for Bearer authentication
         c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
-            In = ParameterLocation.Header,
-            Description = "Please enter token as follows: `Bearer {your token}`",
             Name = "Authorization",
-            Type = SecuritySchemeType.ApiKey
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer", 
+            BearerFormat = "JWT", 
+            In = ParameterLocation.Header,
+            Description = "Paste your token below."
         });
+
 
         // Add security requirement
         c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -57,9 +66,10 @@ try
                         Id = "Bearer"
                     }
                 },
-                new string[] { }
+                Array.Empty<string>()
             }
         });
+
     });
 
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -89,6 +99,18 @@ try
     builder.Services.AddScoped<IFeedService, FeedService>();
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<IS3Service, S3Service>();
+    builder.Services.AddScoped<IEmailService, EmailService>();
+    builder.Services.AddScoped<IPasswordHasher<VoyagerUser>, PasswordHasher<VoyagerUser>>();
+    
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowMySite", policy =>
+        {
+            policy.WithOrigins("https://voyagerapi.com.tr", "http://localhost:1337")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+    });
 
     var app = builder.Build();
 
@@ -120,6 +142,8 @@ try
         app.Logger.LogInformation("Swagger URL: http://localhost:5000/swagger/index.html");
         app.Logger.LogInformation("Swagger URL: https://localhost:5001/swagger/index.html");
     });
+    
+    app.UseCors("AllowMySite");
 
     app.Run();
 }
@@ -130,5 +154,5 @@ catch (Exception ex)
 }
 finally
 {
-    LogManager.Shutdown(); // Ensure NLog resources are properly released
+    LogManager.Shutdown();
 }

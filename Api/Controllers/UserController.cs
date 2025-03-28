@@ -1,4 +1,5 @@
 using Core.Dtos;
+using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -17,13 +18,13 @@ public class UserController(IAuthService authService, IUserService userService) 
         var voyagerUserId = GetUserIdFromTokenClaims();
         if (voyagerUserId is null)
             return Unauthorized("User ID not found in token claims.");
-            
+
         var user = await userService.GetUserByIdAsync((Guid)voyagerUserId);
             
         if (user is null)
             return Unauthorized("User not found.");
             
-        return Ok(user);
+        return Ok(user.ToDto());
     }
     
     [HttpGet("{userId}")]
@@ -42,7 +43,7 @@ public class UserController(IAuthService authService, IUserService userService) 
             return Unauthorized("User not found.");
         }
 
-        return Ok(user);
+        return Ok(user.ToDto());
     }
 
     

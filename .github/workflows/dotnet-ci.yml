@@ -35,7 +35,7 @@ jobs:
 
     - name: Generate swagger.json
       run: |
-          dotnet swagger tofile \
+          swagger tofile \
             --output swagger.json \
             Api/bin/Release/net9.0/Api.dll v1
 

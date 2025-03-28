@@ -37,7 +37,7 @@ jobs:
       run: |
           swagger tofile \
             --output swagger.json \
-            --openapiversion 3.1 \
+            --openapiversion 3.0.1 \
             Api/bin/Release/net9.0/Api.dll v1
 
     - name: Upload swagger.json as artifact

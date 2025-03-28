@@ -31,13 +31,12 @@ jobs:
       run: dotnet test --no-build --verbosity normal
       
     - name: Install Swagger CLI
-      run: dotnet tool install --global Swashbuckle.AspNetCore.Cli
+      run: dotnet tool install --global Swashbuckle.AspNetCore.Cli --version 6.4.0
 
     - name: Generate swagger.json
       run: |
           swagger tofile \
             --output swagger.json \
-            --openapiversion 3.0.1 \
             Api/bin/Release/net9.0/Api.dll v1
 
     - name: Upload swagger.json as artifact

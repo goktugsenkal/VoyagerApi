@@ -40,9 +40,9 @@ jobs:
             --openapiversion 3.0 \
             Api/bin/Release/net9.0/Api.dll v1
     
-    - name: Patch OpenAPI version to 3.0.4
+    - name: Patch OpenAPI version to 3.0.1
       run: |
-          sed -i 's/"openapi": "3.0.1"/"openapi": "3.0.4"/' swagger.json
+          sed -i 's/"openapi": "3.0.4"/"openapi": "3.0.1"/' swagger.json
 
     - name: Upload swagger.json as artifact
       uses: actions/upload-artifact@v4

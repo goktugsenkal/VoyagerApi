@@ -29,6 +29,21 @@ jobs:
 
     - name: Run tests
       run: dotnet test --no-build --verbosity normal
+      
+    - name: Install Swagger CLI
+      run: dotnet tool install --global Swashbuckle.AspNetCore.Cli
+
+    - name: Generate swagger.json
+      run: |
+          dotnet swagger tofile \
+            --output swagger.json \
+            Api/bin/Release/net9.0/Api.dll v1
+
+    - name: Upload swagger.json as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: swagger-json
+        path: swagger.json
 
   deploy:
     needs: build

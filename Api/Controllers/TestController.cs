@@ -1,3 +1,4 @@
+using Core.Constants;
 using Core.Entities;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -10,8 +11,8 @@ namespace Api.Controllers;
 public class TestController(DataContext context) : BaseApiController
 {
     [HttpGet]
-    public ActionResult<string> Get()
+    public ActionResult<string> GetVersion()
     {
-        return Ok("0.2.3");
+        return Content(VersionInfo.ApiVersion, "text/plain");
     }
 }

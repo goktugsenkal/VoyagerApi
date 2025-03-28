@@ -37,6 +37,7 @@ jobs:
       run: |
           swagger tofile \
             --output swagger.json \
+            --serializeasv2 \
             Api/bin/Release/net9.0/Api.dll v1
 
     - name: Upload swagger.json as artifact

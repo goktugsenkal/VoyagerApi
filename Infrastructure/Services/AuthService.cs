@@ -270,7 +270,8 @@ public class AuthService(
             return false;
         }
         
-        token = WebUtility.UrlDecode(token);
+        // the browser does this automatically, so it's not needed
+        // token = WebUtility.UrlDecode(token);
         
         if (!ValidateAccountActionToken(token, "ResetPassword", out Guid tokenUserId))
         {

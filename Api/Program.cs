@@ -100,6 +100,8 @@ try
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<IS3Service, S3Service>();
     builder.Services.AddScoped<IEmailService, EmailService>();
+    builder.Services.AddScoped<IUserRepository, UserRepository>();
+    builder.Services.AddScoped<IUserChangeLogRepository, UserChangeLogRepository>();
     builder.Services.AddScoped<IPasswordHasher<VoyagerUser>, PasswordHasher<VoyagerUser>>();
     
     builder.Services.AddCors(options =>

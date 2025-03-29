@@ -7,6 +7,7 @@ public class VoyagerUser : UpdatableBaseEntity
 {
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
+    public string DisplayName => $"{FirstName} {LastName}".Trim();
     public string Bio { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty; //
     
@@ -40,7 +41,7 @@ public class VoyagerUser : UpdatableBaseEntity
     public ICollection<Voyage> Voyages { get; set; }
 }
 
-public static class VoyagerUserMapper
+public static class VoyagerUserExtensions
 {
     public static VoyagerUserDto ToDto(this VoyagerUser user)
     {
@@ -49,6 +50,7 @@ public static class VoyagerUserMapper
             Id = user.Id,
             FirstName = user.FirstName,
             LastName = user.LastName,
+            DisplayName = user.DisplayName,
             Bio = user.Bio,
             Location = user.Location,
             ProfilePictureUrl = user.ProfilePictureUrl,

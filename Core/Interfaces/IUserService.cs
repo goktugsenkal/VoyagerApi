@@ -13,5 +13,6 @@ public interface IUserService
     Task UpdateUserAsync(VoyagerUser user);
     Task UpdateProfileAsync(Guid userId, UpdateProfileModel model, string ipAddress, string userAgent);
     Task PatchProfileAsync(Guid userId, PatchProfileModel model, string ipAddress, string userAgent);
-
+    Task<UserImageUploadDto> GeneratePresignedUploadUrlsAsync(Guid userId, UserImageUploadModel request);
+    Task UpdateProfileImageUrlsAsync(Guid userId, string? profileUrl, string? bannerUrl, string ipAddress, string userAgent);
 }

@@ -2,8 +2,6 @@ using Core.Dtos;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
-using Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Services;
 
@@ -100,11 +98,13 @@ public class UserService(
         LogIfChanged(userId, user.Username, nameof(user.FirstName), user.FirstName, model.FirstName, ipAddress, userAgent);
         LogIfChanged(userId, user.Username, nameof(user.LastName), user.LastName, model.LastName, ipAddress, userAgent);
         LogIfChanged(userId, user.Username, nameof(user.Bio), user.Bio, model.Bio, ipAddress, userAgent);
+        LogIfChanged(userId, user.Username, nameof(user.Location), user.Location, model.Location, ipAddress, userAgent);
         LogIfChanged(userId, user.Username, nameof(user.Username), user.Username, model.Username, ipAddress, userAgent);
             
         user.FirstName = model.FirstName;
         user.LastName = model.LastName;
         user.Bio = model.Bio;
+        user.Location = model.Location;
         user.Username = model.Username;
 
         await userRepository.UpdateAsync(user);
@@ -133,6 +133,12 @@ public class UserService(
             LogIfChanged(userId, user.Username, nameof(user.Bio), user.Bio, model.Bio, ipAddress, userAgent);
             user.Bio = model.Bio;
         }
+        
+        if (model.Location is not null && model.Location != user.Location)
+        {
+            LogIfChanged(userId, user.Username, nameof(user.Location ), user.Location , model.Location , ipAddress, userAgent);
+            user.Location = model.Location;
+        }
 
         if (model.Username is not null && model.Username != user.Username)
         {
@@ -146,7 +152,56 @@ public class UserService(
         await userRepository.UpdateAsync(user);
         await logRepository.SaveChangesAsync();
     }
-    
+
+    public async Task<UserImageUploadDto> GeneratePresignedUploadUrlsAsync(Guid userId, UserImageUploadModel request)
+    {
+        var response = new UserImageUploadDto();
+
+        if (request.UpdateProfilePicture)
+        {
+            var profileImageId = Guid.NewGuid().ToString("N");
+            var profileKey = $"users/{userId}/{profileImageId}.jpg";
+
+            response.ProfilePictureUploadUrl = s3Service.GeneratePreSignedUploadUrl(profileKey, TimeSpan.FromMinutes(10));
+            response.ProfilePictureUrl = profileKey;
+        }
+
+        if (request.UpdateBannerPicture)
+        {
+            var bannerImageId = Guid.NewGuid().ToString("N");
+            var bannerKey = $"users/{userId}/{bannerImageId}.jpg";
+
+            response.BannerPictureUploadUrl = s3Service.GeneratePreSignedUploadUrl(bannerKey, TimeSpan.FromMinutes(10));
+            response.BannerPictureUrl = bannerKey;
+        }
+
+        return response;
+    }
+
+    public async Task UpdateProfileImageUrlsAsync(Guid userId, string? profilePictureKey, string? bannerPictureKey, string ipAddress, string userAgent)
+    {
+        var user = await userRepository.GetByIdAsync(userId);
+        if (user == null)
+            throw new Exception("User not found");
+
+        if (!string.IsNullOrWhiteSpace(profilePictureKey))
+        {
+            LogIfChanged(userId, user.Username, nameof(user.ProfilePictureUrl), user.ProfilePictureUrl, profilePictureKey, ipAddress, userAgent);
+            user.ProfilePictureUrl = profilePictureKey; // just the key
+        }
+
+        if (!string.IsNullOrWhiteSpace(bannerPictureKey))
+        {
+            LogIfChanged(userId, user.Username, nameof(user.BannerPictureUrl), user.BannerPictureUrl, bannerPictureKey, ipAddress, userAgent);
+            user.BannerPictureUrl = bannerPictureKey; // just the key
+        }
+
+        await userRepository.UpdateAsync(user);
+    }
+
+
+
+
     private void LogIfChanged(Guid userId, string changedByUsername, string fieldName, string? oldValue, string? newValue, string ipAddress, string userAgent)
     {
         if (oldValue != newValue)
@@ -164,7 +219,7 @@ public class UserService(
                 UserAgent = userAgent
             };
 
-            logRepository.Add(log); // this should be a non-async method in your repo
+            logRepository.Add(log);
         }
     }
 }

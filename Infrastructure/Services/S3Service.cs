@@ -1,3 +1,4 @@
+using System.Net;
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -22,6 +23,29 @@ public class S3Service : IS3Service
         // Create the S3 client using the provided credentials
         _s3Client = new AmazonS3Client(accessKey, secretKey, RegionEndpoint.GetBySystemName(region));
     }
+    
+    public async Task<bool> ObjectExistsAsync(string key)
+    {
+        try
+        {
+            var request = new GetObjectMetadataRequest
+            {
+                BucketName = _bucketName,
+                Key = key
+            };
+
+            var response = await _s3Client.GetObjectMetadataAsync(request);
+            return response.HttpStatusCode == HttpStatusCode.OK;
+        }
+        catch (AmazonS3Exception ex)
+        {
+            if (ex.StatusCode == HttpStatusCode.NotFound)
+                return false;
+            
+            throw;
+        }
+    }
+
     public string GeneratePreSignedUploadUrl(string objectKey, TimeSpan expiration)
     {
         var request = new GetPreSignedUrlRequest

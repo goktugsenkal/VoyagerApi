@@ -114,6 +114,34 @@ public class UserController(IAuthService authService, IUserService userService) 
         {
             return NotFound(new { error = ex.Message }); // 404
         }
+    }
+    
+    [HttpPost("/profile/images")]
+    [Authorize]
+    public async Task<IActionResult> GetPresignedUploadUrls([FromBody] UserImageUploadModel model)
+    {
+        var userId = GetUserIdFromTokenClaims();
+        if (userId is null)
+            return Unauthorized("User ID not found in token claims.");
+        
+        // userId is not null
+        var result = await userService.GeneratePresignedUploadUrlsAsync(userId.Value, model);
+        return Ok(result);
+    }
+    
+    [HttpPut("/profile/images")]
+    [Authorize]
+    public async Task<IActionResult> ConfirmImageUpload([FromBody] UpdateUserImagesModel model)
+    {
+        var userId = GetUserIdFromTokenClaims();
+        if (userId is null)
+            return Unauthorized("User ID not found in token claims.");
+        
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var userAgent = Request.Headers.UserAgent.ToString();
 
+        await userService.UpdateProfileImageUrlsAsync(userId.Value, model.ProfilePictureKey, model.BannerPictureKey, ip, userAgent);
+        
+        return NoContent();
     }
 }

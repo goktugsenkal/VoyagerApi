@@ -16,7 +16,14 @@ public class UserRepository(DataContext dataContext) : IUserRepository
     {
         return await dataContext.Users.FirstOrDefaultAsync(u => u.Email == email);
     }
-    
+
+    public async Task<string?> GetUsernameByIdAsync(Guid id)
+    {
+        var user = await dataContext.Users.FirstOrDefaultAsync(u => u.Id == id);
+        
+        return user?.Username;
+    }
+
     public async Task<bool> UsernameExistsAsync(string username, Guid excludeUserId)
     {
         var normalized = username.ToLower();

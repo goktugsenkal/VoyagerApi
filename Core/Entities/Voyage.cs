@@ -40,8 +40,6 @@ public class Voyage : UpdatableBaseEntity
     public IEnumerable<Comment?> Comments { get; set; }
     [JsonIgnore]
     public VoyagerUser User { get; set; }
-
-    public string VoyagerUsername { get; set; }
 }
 
 public static class VoyageExtensions
@@ -80,7 +78,6 @@ public static class VoyageExtensions
                 : new List<CommentDto?>(),
             CreatedAt = voyage.CreatedAt,
             UpdatedAt = voyage.UpdatedAt,
-            VoyagerUsername = voyage.VoyagerUsername ?? string.Empty,
             VoyagerUserId = voyage.VoyagerUserId
         };
     }
@@ -191,7 +188,6 @@ public static class VoyageExtensions
             ActualPrice = actualPrice ?? voyage.ActualPrice,
             ThumbnailUrl = thumbnailUrl ?? voyage.ThumbnailUrl,
             VoyagerUserId = voyagerUserId ?? voyage.VoyagerUserId,
-            VoyagerUsername = voyagerUsername ?? voyage.VoyagerUsername,
             CreatedAt = createdAt ?? voyage.CreatedAt,
             UpdatedAt = updatedAt ?? voyage.UpdatedAt,
             ImageUrls = imageUrls ?? voyage.ImageUrls,

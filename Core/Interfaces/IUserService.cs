@@ -7,6 +7,7 @@ namespace Core.Interfaces;
 public interface IUserService
 {
     Task<VoyagerUser?> GetUserByIdAsync(Guid id);
+    Task<VoyagerUserDto?> GetUserDtoByIdAsync(Guid id);
     Task<VoyagerUser?> GetUserByEmailAsync(string email);
     Task<string?> GetUsernameByIdAsync(Guid id);
     Task<PagedList<VoyageDto>> GetVoyagesOfAUserAsync(string userId,  int pageNumber, int pageSize);

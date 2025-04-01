@@ -19,12 +19,12 @@ public class UserController(IAuthService authService, IUserService userService) 
         if (voyagerUserId is null)
             return Unauthorized("User ID not found in token claims.");
 
-        var user = await userService.GetUserByIdAsync((Guid)voyagerUserId);
+        var user = await userService.GetUserDtoByIdAsync((Guid)voyagerUserId);
             
         if (user is null)
             return Unauthorized("User not found.");
             
-        return Ok(user.ToDto());
+        return Ok(user);
     }
     
     [HttpGet("{userId}")]
@@ -36,14 +36,14 @@ public class UserController(IAuthService authService, IUserService userService) 
             return BadRequest("Invalid user id format.");
         }
 
-        var user = await userService.GetUserByIdAsync(voyagerUserId);
+        var userDto = await userService.GetUserDtoByIdAsync(voyagerUserId);
 
-        if (user is null)
+        if (userDto is null)
         {
             return Unauthorized("User not found.");
         }
 
-        return Ok(user.ToDto());
+        return Ok(userDto);
     }
 
     

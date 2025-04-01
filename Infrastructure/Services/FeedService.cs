@@ -7,6 +7,7 @@ namespace Infrastructure.Services;
 
 public class FeedService(IVoyageRepository voyageRepository,
         IS3Service s3Service,
+        IUserRepository userRepository,
         ICommentRepository commentRepository, 
         ILikeRepository likeRepository) : IFeedService
 {
@@ -21,6 +22,8 @@ public class FeedService(IVoyageRepository voyageRepository,
         // convert image keys to s3 presigned download urls
         foreach (var voyageDto in voyagesDtos)
         {
+            voyageDto.VoyagerUsername = await userRepository.GetUsernameByIdAsync(voyageDto.VoyagerUserId) ?? "Voyager User";
+
             if (voyageDto.ImageUrls != null && voyageDto.ImageUrls.Any())
             {
                 voyageDto.ImageUrls = voyageDto.ImageUrls

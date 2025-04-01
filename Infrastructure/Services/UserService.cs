@@ -30,7 +30,24 @@ public class UserService(
         // can return null
         return user;
     }
-    
+
+    public async Task<VoyagerUserDto?> GetUserDtoByIdAsync(Guid id)
+    {
+        var user = await userRepository.GetByIdAsync(id);
+        if (user == null)
+            return null;
+
+        var userDto = user.ToDto();
+
+        if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+            userDto.ProfilePictureUrl = s3Service.GeneratePreSignedDownloadUrl(user.ProfilePictureUrl, TimeSpan.FromMinutes(15));
+
+        if (!string.IsNullOrWhiteSpace(user.BannerPictureUrl))
+            userDto.BannerPictureUrl = s3Service.GeneratePreSignedDownloadUrl(user.BannerPictureUrl, TimeSpan.FromMinutes(15));
+
+        return userDto;
+    }
+
     public async Task<VoyagerUser?> GetUserByEmailAsync(string email)
     {
         return await userRepository.GetByEmailAsync(email);

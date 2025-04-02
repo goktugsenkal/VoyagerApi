@@ -1,14 +1,11 @@
 using Core.Constants;
-using Core.Entities;
-using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Api.Controllers;
 
 [ApiController]
 [Route("version")]
-public class TestController(DataContext context) : BaseApiController
+public class TestController : BaseApiController
 {
     [HttpGet]
     public ActionResult<string> GetVersion()

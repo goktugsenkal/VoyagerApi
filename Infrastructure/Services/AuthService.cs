@@ -66,7 +66,8 @@ public class AuthService(
 
         public async Task<VoyagerUser?> RegisterAsync(RegisterModel request)
         {
-            if (await context.Users.AnyAsync(u => u.Username == request.Username))
+            if (await context.Users.AnyAsync(u => u.Username == request.Username) ||
+                await context.Users.AnyAsync(u => u.Email == request.Email))
             {
                 return null;
             }

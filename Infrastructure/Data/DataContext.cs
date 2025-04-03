@@ -19,13 +19,15 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
         modelBuilder.Entity<Voyage>()
             .HasOne<VoyagerUser>(v => v.User)
             .WithMany(u => u.Voyages)
-            .HasForeignKey(v => v.VoyagerUserId);
+            .HasForeignKey(v => v.VoyagerUserId)
+            .OnDelete(DeleteBehavior.NoAction);
 
         var stopEntity = modelBuilder.Entity<Stop>();
 
         stopEntity.HasOne(s => s.Voyage)
             .WithMany(v => v.Stops)
-            .HasForeignKey(s => s.VoyageId);
+            .HasForeignKey(s => s.VoyageId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         stopEntity.HasIndex(s => new { s.IsFocalPoint, s.Latitude, s.Longitude });
 

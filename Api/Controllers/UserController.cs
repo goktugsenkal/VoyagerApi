@@ -3,6 +3,7 @@ using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -69,7 +70,10 @@ public class UserController(IAuthService authService, IUserService userService) 
         if (userId is null)
             return Unauthorized("User ID not found in token claims.");
         
-        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var ip = HttpContext.Features.Get<IHttpConnectionFeature>()?.RemoteIpAddress?.ToString()
+                 ?? HttpContext.Connection.RemoteIpAddress?.ToString()
+                 ?? "unknown";
+
         var userAgent = Request.Headers.UserAgent.ToString();
 
         try
@@ -97,7 +101,10 @@ public class UserController(IAuthService authService, IUserService userService) 
         if (userId is null)
             return Unauthorized("User ID not found in token claims.");
         
-        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var ip = HttpContext.Features.Get<IHttpConnectionFeature>()?.RemoteIpAddress?.ToString()
+                 ?? HttpContext.Connection.RemoteIpAddress?.ToString()
+                 ?? "unknown";
+
         var userAgent = Request.Headers.UserAgent.ToString();
 
         try
@@ -137,7 +144,10 @@ public class UserController(IAuthService authService, IUserService userService) 
         if (userId is null)
             return Unauthorized("User ID not found in token claims.");
         
-        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var ip = HttpContext.Features.Get<IHttpConnectionFeature>()?.RemoteIpAddress?.ToString()
+                 ?? HttpContext.Connection.RemoteIpAddress?.ToString()
+                 ?? "unknown";
+
         var userAgent = Request.Headers.UserAgent.ToString();
 
         await userService.UpdateProfileImageUrlsAsync(userId.Value, model.ProfilePictureKey, model.BannerPictureKey, ip, userAgent);

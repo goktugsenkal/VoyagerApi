@@ -71,9 +71,13 @@ public class UserService(
         // and map stops to StopDtos
         var voyageDtos = voyages.Items.Select(voyage => voyage.ToDto()).ToList();
         
+        
+        
         // convert image keys to s3 presigned download urls
         foreach (var voyageDto in voyageDtos)
         {
+            voyageDto.VoyagerUsername = await userRepository.GetUsernameByIdAsync(voyageDto.VoyagerUserId) ?? "Voyager User";
+
             if (voyageDto.ImageUrls != null && voyageDto.ImageUrls.Any())
             {
                 voyageDto.ImageUrls = voyageDto.ImageUrls

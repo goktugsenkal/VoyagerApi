@@ -22,7 +22,7 @@ public class SearchService(IS3Service s3Service, ISearchRepository searchReposit
                 Id = v.Id,
                 Title = v.Title,
                 Subtitle = v.LocationName,
-                ImageUrl = s3Service.GeneratePreSignedDownloadUrl(v.ThumbnailUrl, TimeSpan.FromMinutes(15)),
+                ImageUrl = s3Service.GeneratePreSignedDownloadUrl(v.ImageUrls[0], TimeSpan.FromMinutes(15)),
                 Snippet = GetSnippet(v.Description, query) ?? GetSnippet(v.Title, query) ?? GetSnippet(v.LocationName, query),
                 MatchScore = ScoreText(v.Title, query) + ScoreText(v.Description, query) + ScoreText(v.LocationName, query)
             });

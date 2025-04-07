@@ -5,7 +5,10 @@ using Core.Models;
 
 namespace Infrastructure.Services;
 
-public class VoyageService(IVoyageRepository voyageRepository, IStopRepository stopRepository, IS3Service s3Service, IUserService userService)
+public class VoyageService(IVoyageRepository voyageRepository, 
+    IStopRepository stopRepository, 
+    IS3Service s3Service, 
+    IUserService userService, IUserRepository userRepository)
     : IVoyageService
 {
 
@@ -75,10 +78,34 @@ public class VoyageService(IVoyageRepository voyageRepository, IStopRepository s
     {
         // try to get the entire voyage entity from the database
         var voyage = await voyageRepository.GetByIdAsync(voyageId);
+        
+        if(voyage == null) return null;
 
-        // return null if no voyage is found
-        // if found return as voyage dto 
-        return voyage?.ToDto();
+        var voyageDto = voyage.ToDto();
+
+        voyageDto.VoyagerUsername =
+            await userRepository.GetUsernameByIdAsync(voyageDto.VoyagerUserId) ?? "Voyager User";
+
+        if (voyageDto.ImageUrls.Any())
+        {
+            voyageDto.ImageUrls = voyageDto.ImageUrls
+                .Select(key => s3Service.GeneratePreSignedDownloadUrl(key, TimeSpan.FromMinutes(15)))
+                .ToList();
+        }
+
+        if (voyageDto.Stops.Count == 0) return voyageDto;
+        {
+            foreach (var stopDto in voyageDto.Stops)
+            {
+                if (stopDto != null  && stopDto.ImageUrls.Count != 0)
+                {
+                    stopDto.ImageUrls = stopDto.ImageUrls
+                        .Select(key => s3Service.GeneratePreSignedDownloadUrl(key, TimeSpan.FromMinutes(15)))
+                        .ToList();
+                }
+            }
+        }
+        return voyageDto;
     }
 
     /// <summary>

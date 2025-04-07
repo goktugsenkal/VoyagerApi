@@ -5,6 +5,7 @@ using Api.Misc;
 using Core.Constants;
 using Core.Entities;
 using Core.Interfaces;
+using Core.Interfaces.Repositories;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
@@ -104,6 +105,8 @@ try
     builder.Services.AddScoped<IUserRepository, UserRepository>();
     builder.Services.AddScoped<IUserChangeLogRepository, UserChangeLogRepository>();
     builder.Services.AddScoped<IPasswordHasher<VoyagerUser>, PasswordHasher<VoyagerUser>>();
+    builder.Services.AddScoped<ISearchRepository, SearchRepository>();
+    builder.Services.AddScoped<ISearchService, SearchService>();
     
     builder.Services.AddCors(options =>
     {
@@ -111,6 +114,7 @@ try
         {
             policy.WithOrigins("https://voyagerapi.com.tr", "http://localhost:1337")
                 .AllowAnyHeader()
+                .WithOrigins(builder.Environment.IsDevelopment() ? "*": "https://voyagerapi.com.tr", "http://localhost:1337")
                 .AllowAnyMethod();
         });
     });

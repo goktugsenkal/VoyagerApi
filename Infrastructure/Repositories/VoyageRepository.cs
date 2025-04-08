@@ -26,6 +26,12 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
             .Include(v => v.Likes)
             .OrderByDescending(v => v.CreatedAt)
             .AsQueryable();
+        
+        // sort stops
+        foreach (var voyage in voyages)
+        {
+            voyage.SortStops();
+        }
 
         // create a PagedList and return it
         return PagedList<Voyage>.CreatePagedList(voyages, pageNumber, pageSize);
@@ -53,31 +59,48 @@ public class VoyageRepository(DataContext dataContext) : IVoyageRepository
             .Take(pageSize)
             .ToList();
 
+        foreach (var voyage in voyages)
+        {
+            voyage.SortStops();
+        }
+
         return new PagedList<Voyage>(voyages, query.Count(), pageNumber, pageSize);
     }
 
     public async Task<Voyage?> GetByIdAsync(Guid voyageId)
     {
-        // simple return from Voyages table where Id = voyageId
-        return await dataContext.Voyages
+        var voyage = await dataContext.Voyages
             .Include(v => v.Stops)
             .Include(v => v.Comments)
             .Include(v => v.Likes)
             .FirstOrDefaultAsync(v => v.Id == voyageId);
-        // or null if there is no Voyage with the specified voyageId.
+
+        voyage?.SortStops();
+
+        return voyage;
     }
 
     public async Task<PagedList<Voyage>> GetVoyagesByVoyagerUserIdAsync(Guid voyagerUserId, int pageNumber, int pageSize)
     {
-        var voyages = dataContext.Voyages
+        var voyagesQuery = dataContext.Voyages
             .Where(v => v.VoyagerUserId == voyagerUserId)
             .Include(v => v.Stops)
             .Include(v => v.Comments)
             .Include(v => v.Likes)
             .OrderByDescending(v => v.CreatedAt);
-        
-        return PagedList<Voyage>.CreatePagedList(voyages, pageNumber, pageSize);
+
+        var pagedVoyages = PagedList<Voyage>.CreatePagedList(voyagesQuery, pageNumber, pageSize);
+
+        foreach (var voyage in pagedVoyages.Items.Where(v => v.Stops != null && v.Stops.Any()))
+        {
+            voyage.SortStops();
+        }
+
+        return pagedVoyages;
     }
+
+
+
 
     /// <summary>
     /// shitty overhead method

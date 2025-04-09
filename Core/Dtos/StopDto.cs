@@ -9,8 +9,8 @@ public class StopDto
     public string Description { get; set; }
     public double Longitude { get; set; }
     public double Latitude { get; set; }
-    public int DistanceToNext { get; set; }
-    public int ArrivalTimeToNext { get; set; }
+    public int DistanceToNextStop { get; set; }
+    public int ArrivalTimeToNextStop { get; set; }
     public TransportationType TransportationTypeToNextStop { get; set; }
     public bool IsFocalPoint { get; set; }
     public short OrderIndex { get; set; }

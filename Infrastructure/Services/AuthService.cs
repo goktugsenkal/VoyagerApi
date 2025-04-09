@@ -32,12 +32,31 @@ public class AuthService(
             {
                 return null;
             }
+            
+            if (user.LockoutEnabled && user.LockoutEnd > DateTime.UtcNow)
+                throw new Exception("Account is locked. Try again later.");
+
             if (passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password)
                 == PasswordVerificationResult.Failed)
             {
+                user.AccessFailedCount += 1;
+                if (user.AccessFailedCount >= 200) // todo: drop this to ~5 for prod 
+                {
+                    user.LockoutEnabled = true;
+                    user.LockoutEnd = DateTime.UtcNow.AddMinutes(10);
+                }
+
+                await context.SaveChangesAsync();
                 return null;
             }
-
+            
+            // Successful login
+            user.AccessFailedCount = 0;
+            user.LockoutEnabled = false;
+            user.LockoutEnd = null;
+                
+            await context.SaveChangesAsync();
+                
             return await CreateTokenResponse(user);
         }
 

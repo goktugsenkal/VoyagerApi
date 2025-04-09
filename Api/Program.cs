@@ -112,9 +112,8 @@ try
     {
         options.AddPolicy("AllowMySite", policy =>
         {
-            policy.WithOrigins("https://voyagerapi.com.tr", "http://localhost:1337")
+            policy.WithOrigins(builder.Environment.IsDevelopment() ? "*": "https://voyagerapi.com.tr", "http://localhost:1337")
                 .AllowAnyHeader()
-                .WithOrigins(builder.Environment.IsDevelopment() ? "*": "https://voyagerapi.com.tr", "http://localhost:1337")
                 .AllowAnyMethod();
         });
     });

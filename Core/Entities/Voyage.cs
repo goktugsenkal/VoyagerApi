@@ -194,4 +194,15 @@ public static class VoyageExtensions
             Stops = stops ?? voyage.Stops
         };
     }
+    
+    public static void SortStops(this Voyage voyage)
+    {
+        if (voyage.Stops != null)
+        {
+            voyage.Stops = voyage.Stops
+                .Where(stop => stop != null)
+                .OrderBy(stop => stop!.OrderIndex)
+                .ToList();
+        }
+    }
 }

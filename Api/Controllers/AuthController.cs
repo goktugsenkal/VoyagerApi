@@ -46,11 +46,18 @@ namespace Api.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<TokenResponseDto>> Login(LoginModel request)
         {
-            var result = await authService.LoginAsync(request);
-            if (result is null)
-                return BadRequest("Invalid username or password.");
+            try
+            {
+                var result = await authService.LoginAsync(request);
+                if (result is null)
+                    return BadRequest("Invalid username or password.");
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);   
+            }
         }
 
         [HttpPost("refresh-token")]

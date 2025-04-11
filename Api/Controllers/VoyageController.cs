@@ -129,7 +129,7 @@ public class VoyageController(IVoyageService voyageService) : BaseApiController
             return Unauthorized("User ID not found in token claims.");
         }
         
-        var voyage = await voyageService.GetVoyageByIdAsync(voyageId);
+        var voyage = await voyageService.GetVoyageDtoByIdAsync(voyageId, voyagerUserId.Value); // checked for null, safe
         
         if (voyage == null)
         {
@@ -149,11 +149,18 @@ public class VoyageController(IVoyageService voyageService) : BaseApiController
     [Authorize]
     public async Task<IActionResult> UpdateVoyage(Guid voyageId, UpdateVoyageModel updateVoyageModel)
     {
+        var voyagerUserId = GetUserIdFromTokenClaims();
+        
         var voyage = await voyageService.GetVoyageByIdAsync(voyageId);
         
         if (voyage == null)
         {
             return NotFound("Voyage not found.");
+        }
+        
+        if (voyagerUserId != voyage.VoyagerUserId)
+        {
+            return Unauthorized("You are not authorized to update this voyage.");    
         }
         
         await voyageService.UpdateVoyageAsync(voyageId, updateVoyageModel);
@@ -170,11 +177,18 @@ public class VoyageController(IVoyageService voyageService) : BaseApiController
     [Authorize]
     public async Task<IActionResult> DeleteVoyage(Guid voyageId)
     {
+        var voyagerUserId = GetUserIdFromTokenClaims();
+        
         var voyage = await voyageService.GetVoyageByIdAsync(voyageId);
         
         if (voyage == null)
         {
             return NotFound("Voyage not found.");
+        }
+        
+        if (voyagerUserId != voyage.VoyagerUserId)
+        {
+            return Unauthorized("You are not authorized to delete this voyage.");    
         }
         
         await voyageService.DeleteVoyageAsync(voyageId);

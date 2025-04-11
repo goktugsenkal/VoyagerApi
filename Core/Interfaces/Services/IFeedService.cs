@@ -5,5 +5,5 @@ namespace Core.Interfaces;
 
 public interface IFeedService
 {
-    Task<PagedList<VoyageDto>> GetFeedAsync(int pageNumber, int pageSize);
+    Task<PagedList<VoyageDto>> GetFeedAsync(int pageNumber, int pageSize, Guid consumerUserId);
 }

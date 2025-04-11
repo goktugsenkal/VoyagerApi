@@ -31,5 +31,7 @@ public class VoyageDto
     public DateTime UpdatedAt { get; set; }
 
     public string VoyagerUsername { get; set; } = string.Empty;
+    public bool IsLiked { get; set; }
+    public string ProfilePictureUrl { get; set; } = string.Empty;
     public Guid VoyagerUserId { get; set; }
 }

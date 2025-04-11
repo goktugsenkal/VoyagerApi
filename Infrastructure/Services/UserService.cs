@@ -7,7 +7,8 @@ namespace Infrastructure.Services;
 
 public class UserService(
     IVoyageRepository voyageRepository, 
-    IUserRepository userRepository, 
+    IUserRepository userRepository,
+    ILikeRepository likeRepository,
     IUserChangeLogRepository logRepository, 
     IS3Service s3Service) : IUserService
 {
@@ -53,7 +54,10 @@ public class UserService(
         return await userRepository.GetByEmailAsync(email);
     }
 
-    public async Task<PagedList<VoyageDto>> GetVoyagesOfAUserAsync(string userId, int pageNumber, int pageSize)
+    public async Task<PagedList<VoyageDto>> GetVoyagesOfAUserAsync(string userId, 
+        int pageNumber, 
+        int pageSize,
+        Guid consumerUserId)
     {
         Guid voyagerUserId;
         try
@@ -76,7 +80,11 @@ public class UserService(
         // convert image keys to s3 presigned download urls
         foreach (var voyageDto in voyageDtos)
         {
-            voyageDto.VoyagerUsername = await userRepository.GetUsernameByIdAsync(voyageDto.VoyagerUserId) ?? "Voyager User";
+            var voyagerUser = await userRepository.GetByIdAsync(voyageDto.VoyagerUserId);
+            
+            voyageDto.VoyagerUsername = voyagerUser?.Username ?? "Voyager User";
+            voyageDto.ProfilePictureUrl = s3Service.GeneratePreSignedDownloadUrl(voyagerUser?.ProfilePictureUrl ?? "", TimeSpan.FromMinutes(10));
+            voyageDto.IsLiked = await likeRepository.ExistsAsync(voyageDto.Id, null, consumerUserId);
 
             if (voyageDto.ImageUrls != null && voyageDto.ImageUrls.Any())
             {

@@ -10,7 +10,9 @@ namespace Api.Controllers;
 
 [Route("users")]
 [ApiController]
-public class UserController(IAuthService authService, IUserService userService) : BaseApiController
+public class UserController(IAuthService authService, 
+    IUserService userService, 
+    IVoyageService voyageService) : BaseApiController
 {
     [HttpGet("me")]
     [Authorize]
@@ -53,12 +55,16 @@ public class UserController(IAuthService authService, IUserService userService) 
     public async Task<ActionResult<PagedList<VoyageDto>>> GetVoyagesOfAUser
         (string userId, int pageNumber = 1, int pageSize = 10)
     {
+        var voyagerUserId = GetUserIdFromTokenClaims();
+        if (voyagerUserId is null)
+            return Unauthorized("User ID not found in token claims.");
+        
         if (pageSize < 1 || pageNumber < 1 || pageSize > 20)
         {
             return BadRequest("Page number and page size must be greater than 1 and page size must be less than or equal to 20.");
         }
         
-        return await userService.GetVoyagesOfAUserAsync(userId, pageNumber, pageSize);
+        return await userService.GetVoyagesOfAUserAsync(userId, pageNumber, pageSize, voyagerUserId.Value); // value is checked for null
     }
     
     [HttpPut("/profile")]

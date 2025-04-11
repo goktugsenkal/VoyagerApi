@@ -8,7 +8,9 @@ namespace Infrastructure.Services;
 public class VoyageService(IVoyageRepository voyageRepository, 
     IStopRepository stopRepository, 
     IS3Service s3Service, 
-    IUserService userService, IUserRepository userRepository)
+    IUserService userService, 
+    IUserRepository userRepository, 
+    ILikeRepository likeRepository)
     : IVoyageService
 {
 
@@ -49,6 +51,7 @@ public class VoyageService(IVoyageRepository voyageRepository,
         return new PagedList<VoyageDto>(voyageDtos, voyages.TotalCount, voyages.CurrentPage, voyages.PageSize);
     }
 
+
     public async Task<PagedList<VoyageDto>> GetVoyagesByVoyagerUserIdAsync(Guid voyagerUserId, int pageNumber,
         int pageSize)
     {
@@ -68,13 +71,14 @@ public class VoyageService(IVoyageRepository voyageRepository,
     /// Asynchronously retrieves a voyage by its ID and maps it to a VoyageDto. Maps Stops and Comments to StopDto and CommentDto.
     /// </summary>
     /// <param name="voyageId">The unique identifier of the voyage.</param>
+    /// <param name="consumerUsedId"></param>
     /// <returns>
     /// A VoyageDto containing the voyage details if found, otherwise null.
     /// The VoyageDto includes the title, description, location, dates, like count,
     /// stop count, currency, expected and actual prices, voyager user ID, and lists
     /// of stops and comments mapped to StopDto and CommentDto respectively.
     /// </returns>
-    public async Task<VoyageDto?> GetVoyageByIdAsync(Guid voyageId)
+    public async Task<VoyageDto?> GetVoyageDtoByIdAsync(Guid voyageId, Guid consumerUsedId)
     {
         // try to get the entire voyage entity from the database
         var voyage = await voyageRepository.GetByIdAsync(voyageId);
@@ -83,8 +87,11 @@ public class VoyageService(IVoyageRepository voyageRepository,
 
         var voyageDto = voyage.ToDto();
 
-        voyageDto.VoyagerUsername =
-            await userRepository.GetUsernameByIdAsync(voyageDto.VoyagerUserId) ?? "Voyager User";
+        var voyagerUser = await userRepository.GetByIdAsync(voyageDto.VoyagerUserId);
+        
+        voyageDto.VoyagerUsername = voyagerUser?.Username ?? "Voyager User";
+        voyageDto.ProfilePictureUrl = s3Service.GeneratePreSignedDownloadUrl(voyagerUser?.ProfilePictureUrl ?? "", TimeSpan.FromMinutes(10));
+        voyageDto.IsLiked = await likeRepository.ExistsAsync(voyageDto.Id, null, consumerUsedId);
 
         if (voyageDto.ImageUrls.Any())
         {
@@ -106,6 +113,14 @@ public class VoyageService(IVoyageRepository voyageRepository,
             }
         }
         return voyageDto;
+    }
+
+    public async Task<Voyage?> GetVoyageByIdAsync(Guid voyageId)
+    {
+        // try to get the entire voyage entity from the database
+        var voyage = await voyageRepository.GetByIdAsync(voyageId);
+        
+        return voyage ?? null;
     }
 
     /// <summary>

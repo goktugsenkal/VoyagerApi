@@ -10,7 +10,7 @@ public interface IUserService
     Task<VoyagerUserDto?> GetUserDtoByIdAsync(Guid id);
     Task<VoyagerUser?> GetUserByEmailAsync(string email);
     Task<string?> GetUsernameByIdAsync(Guid id);
-    Task<PagedList<VoyageDto>> GetVoyagesOfAUserAsync(string userId,  int pageNumber, int pageSize);
+    Task<PagedList<VoyageDto>> GetVoyagesOfAUserAsync(string userId, int pageNumber, int pageSize, Guid consumerUserId);
     Task UpdateUserAsync(VoyagerUser user);
     Task UpdateProfileAsync(Guid userId, UpdateProfileModel model, string ipAddress, string userAgent);
     Task PatchProfileAsync(Guid userId, PatchProfileModel model, string ipAddress, string userAgent);

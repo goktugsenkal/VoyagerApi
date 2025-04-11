@@ -3,7 +3,7 @@ namespace Core.Entities;
 public class UserChangeLog
 {
     public Guid Id { get; set; }
-    public Guid UserId { get; set; }
+    public Guid VoyagerUserId { get; set; }
     public string ChangedByUsername { get; set; }
     public string FieldName { get; set; }
     public string OldValue { get; set; }

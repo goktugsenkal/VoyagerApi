@@ -22,6 +22,16 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
             .HasForeignKey(v => v.VoyagerUserId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        var voyagerUserEntity = modelBuilder.Entity<VoyagerUser>();
+        
+        voyagerUserEntity.HasIndex(u => u.Username)
+            .IsUnique();
+
+        voyagerUserEntity.HasMany<UserChangeLog>()
+            .WithOne()
+            .HasForeignKey(l => l.VoyagerUserId)
+            .OnDelete(DeleteBehavior.NoAction);
+
         var stopEntity = modelBuilder.Entity<Stop>();
 
         stopEntity.HasOne(s => s.Voyage)

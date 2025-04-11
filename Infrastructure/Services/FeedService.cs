@@ -11,7 +11,7 @@ public class FeedService(IVoyageRepository voyageRepository,
         ICommentRepository commentRepository, 
         ILikeRepository likeRepository) : IFeedService
 {
-    public async Task<PagedList<VoyageDto>> GetFeedAsync(int pageNumber, int pageSize)
+    public async Task<PagedList<VoyageDto>> GetFeedAsync(int pageNumber, int pageSize, Guid consumerUserId)
     {
         // get all voyages with paged list
         var voyages = voyageRepository.GetAllAsPagedList(pageNumber, pageSize);
@@ -22,7 +22,11 @@ public class FeedService(IVoyageRepository voyageRepository,
         // convert image keys to s3 presigned download urls
         foreach (var voyageDto in voyagesDtos)
         {
-            voyageDto.VoyagerUsername = await userRepository.GetUsernameByIdAsync(voyageDto.VoyagerUserId) ?? "Voyager User";
+            var voyagerUser = await userRepository.GetByIdAsync(voyageDto.VoyagerUserId);
+            
+            voyageDto.VoyagerUsername = voyagerUser?.Username ?? "Voyager User";
+            voyageDto.ProfilePictureUrl = s3Service.GeneratePreSignedDownloadUrl(voyagerUser?.ProfilePictureUrl ?? "", TimeSpan.FromMinutes(10));
+            voyageDto.IsLiked = await likeRepository.ExistsAsync(voyageDto.Id, null, consumerUserId);
 
             if (voyageDto.ImageUrls != null && voyageDto.ImageUrls.Any())
             {

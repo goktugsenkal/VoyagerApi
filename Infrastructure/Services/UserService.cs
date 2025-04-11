@@ -230,7 +230,7 @@ public class UserService(
             var log = new UserChangeLog
             {
                 Id = Guid.NewGuid(),
-                UserId = userId,
+                VoyagerUserId = userId,
                 ChangedByUsername = changedByUsername,
                 FieldName = fieldName,
                 OldValue = oldValue,

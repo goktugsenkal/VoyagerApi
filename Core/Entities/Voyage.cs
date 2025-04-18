@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Core.Dtos;
 using Core.Enums;
 using Core.Models;
+using Core.Models.Voyage;
 
 namespace Core.Entities;
 
@@ -28,7 +29,7 @@ public class Voyage : UpdatableBaseEntity
     public int ActualPrice { get; set; }
     
     public string ThumbnailUrl { get; set; } = string.Empty;
-    public List<string> ImageUrls { get; set; } = [];
+    public List<string> MediaKeys { get; set; } = [];
     
     public bool IsArchived { get; set; }
     public bool IsCompleted { get; set; }
@@ -63,8 +64,8 @@ public static class VoyageExtensions
             ExpectedPrice = voyage.ExpectedPrice,
             ActualPrice = voyage.ActualPrice,
             ThumbnailUrl = voyage.ThumbnailUrl ?? string.Empty,
-            ImageUrls = voyage.ImageUrls != null 
-                ? new List<string>(voyage.ImageUrls) 
+            MediaUrls = voyage.MediaKeys != null 
+                ? new List<string>(voyage.MediaKeys) 
                 : new List<string>(),
             Stops = voyage.Stops != null 
                 ? voyage.Stops.Where(stop => stop != null)
@@ -117,7 +118,7 @@ public static class VoyageExtensions
             ExpectedPrice = dto.ExpectedPrice,
             ActualPrice = dto.ActualPrice,
             ThumbnailUrl = dto.ThumbnailUrl,
-            ImageUrls = dto.ImageUrls ?? [],
+            MediaKeys = dto.MediaUrls ?? [],
             IsCompleted = dto.IsCompleted,
             VoyagerUserId = dto.VoyagerUserId,
             Stops = dto.Stops?.Select(s => s.ToEntity()).ToList(),
@@ -140,7 +141,7 @@ public static class VoyageExtensions
         voyage.ExpectedPrice = model.ExpectedPrice ?? voyage.ExpectedPrice;
         voyage.ActualPrice = model.ActualPrice ?? voyage.ActualPrice;
         voyage.ThumbnailUrl = model.ThumbnailUrl ?? voyage.ThumbnailUrl;
-        voyage.ImageUrls = model.ImageUrls ?? voyage.ImageUrls;
+        voyage.MediaKeys = model.ImageUrls ?? voyage.MediaKeys;
         voyage.Stops = model.Stops ?? voyage.Stops;
         voyage.IsArchived = model.IsArchived ?? voyage.IsArchived;
     }
@@ -190,7 +191,7 @@ public static class VoyageExtensions
             VoyagerUserId = voyagerUserId ?? voyage.VoyagerUserId,
             CreatedAt = createdAt ?? voyage.CreatedAt,
             UpdatedAt = updatedAt ?? voyage.UpdatedAt,
-            ImageUrls = imageUrls ?? voyage.ImageUrls,
+            MediaKeys = imageUrls ?? voyage.MediaKeys,
             Stops = stops ?? voyage.Stops
         };
     }

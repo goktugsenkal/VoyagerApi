@@ -13,7 +13,12 @@ public class CreateStopModel
     public double DistanceToNextStop { get; set; }
     public double ArrivalTimeToNextStop { get; set; }
     public TransportationType TransportationTypeToNextStop { get; set; }
-    public short ImageCount { get; set; }
+    
+    // deprecated
+    // public int ImageCount { get; set; }
+    
+    // ["mp4", "jpg", "jpg", "jpg"]
+    public List<string> MediaTypes { get; set; } = [];
 
     public short OrderIndex { get; set; }
     public bool IsFocalPoint { get; set; }

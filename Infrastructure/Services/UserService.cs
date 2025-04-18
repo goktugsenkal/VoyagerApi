@@ -86,9 +86,9 @@ public class UserService(
             voyageDto.ProfilePictureUrl = s3Service.GeneratePreSignedDownloadUrl(voyagerUser?.ProfilePictureUrl ?? "", TimeSpan.FromMinutes(10));
             voyageDto.IsLiked = await likeRepository.ExistsAsync(voyageDto.Id, null, consumerUserId);
 
-            if (voyageDto.ImageUrls != null && voyageDto.ImageUrls.Any())
+            if (voyageDto.MediaUrls != null && voyageDto.MediaUrls.Any())
             {
-                voyageDto.ImageUrls = voyageDto.ImageUrls
+                voyageDto.MediaUrls = voyageDto.MediaUrls
                     .Select(key => s3Service.GeneratePreSignedDownloadUrl(key, TimeSpan.FromMinutes(15)))
                     .ToList();
             }
@@ -97,9 +97,9 @@ public class UserService(
             {
                 foreach (var stopDto in voyageDto.Stops)
                 {
-                    if (stopDto.ImageUrls != null && stopDto.ImageUrls.Any())
+                    if (stopDto.MediaUrls != null && stopDto.MediaUrls.Any())
                     {
-                        stopDto.ImageUrls = stopDto.ImageUrls
+                        stopDto.MediaUrls = stopDto.MediaUrls
                             .Select(key => s3Service.GeneratePreSignedDownloadUrl(key, TimeSpan.FromMinutes(15)))
                             .ToList();
                     }

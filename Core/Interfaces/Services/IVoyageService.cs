@@ -1,6 +1,7 @@
 using Core.Dtos;
 using Core.Entities;
 using Core.Models;
+using Core.Models.Voyage;
 
 namespace Core.Interfaces;
 

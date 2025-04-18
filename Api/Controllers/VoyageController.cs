@@ -2,10 +2,9 @@ using Core.Dtos;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
-using Infrastructure.Data;
+using Core.Models.Voyage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Api.Controllers;
 
@@ -25,6 +24,7 @@ public class VoyageController(IVoyageService voyageService) : BaseApiController
 
         try
         {
+            ValidateMediaTypes(createVoyageModel);
             var result = await voyageService.AddVoyageWithMediaAsync(createVoyageModel, voyagerUserId.Value);
             return Ok(new 
             {
@@ -33,12 +33,37 @@ public class VoyageController(IVoyageService voyageService) : BaseApiController
                 stopsUploadUrls = result.StopsUploadUrls
             });
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
         catch (Exception ex)
         {
             return StatusCode(500, $"An error occurred: {ex.Message}");
         }
     }
+    private static readonly HashSet<string> AllowedMediaTypes = new()
+    {
+        "mp4", "jpg", "jpeg", "png", "gif"
+    };
 
+    private void ValidateMediaTypes(CreateVoyageModel model)
+    {
+        foreach (var media in model.MediaTypes ?? [])
+        {
+            if (!AllowedMediaTypes.Contains(media.ToLower()))
+                throw new InvalidOperationException($"Unsupported media type: {media}");
+        }
+
+        foreach (var stop in model.Stops ?? [])
+        {
+            foreach (var media in stop.MediaTypes ?? [])
+            {
+                if (!AllowedMediaTypes.Contains(media.ToLower()))
+                    throw new InvalidOperationException($"Unsupported stop media type: {media}");
+            }
+        }
+    }
 
 
 

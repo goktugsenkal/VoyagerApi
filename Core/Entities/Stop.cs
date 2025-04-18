@@ -16,9 +16,8 @@ public class Stop : UpdatableBaseEntity
     public int DistanceToNextStop { get; set; }
     public int ArrivalTimeToNextStop { get; set; }
     public TransportationType TransportationTypeToNextStop { get; set; }
-
-    public List<string>? ImageUrls { get; set; } = [];
-    public short ImageCount { get; set; }
+    
+    public List<string>? MediaKeys { get; set; } = [];
     
     public bool IsFocalPoint { get; set; } // whether this stop is the focal point of the voyage
     public short OrderIndex { get; set; } // the order in which the stops are visited
@@ -48,8 +47,7 @@ public static class StopMappingExtensions
             OrderIndex = stop.OrderIndex,
             CreatedAt = stop.CreatedAt,
             UpdatedAt = stop.UpdatedAt,
-            ImageCount = stop.ImageCount,
-            ImageUrls = stop.ImageUrls
+            MediaUrls = stop.MediaKeys
         };
     }
     public static Stop ToEntity(this CreateStopModel model)
@@ -65,7 +63,6 @@ public static class StopMappingExtensions
             TransportationTypeToNextStop = model.TransportationTypeToNextStop,
             IsFocalPoint = model.IsFocalPoint,
             OrderIndex = model.OrderIndex,
-            ImageCount = model.ImageCount
         };
     }
     
@@ -85,7 +82,7 @@ public static class StopMappingExtensions
             OrderIndex = dto.OrderIndex,
             CreatedAt = dto.CreatedAt,
             UpdatedAt = dto.UpdatedAt,
-            ImageUrls = dto.ImageUrls
+            MediaKeys = dto.MediaUrls
         };
     }
 
@@ -100,7 +97,7 @@ public static class StopMappingExtensions
         int? arrivalTimeToNext = null,
         TransportationType? transportationTypeToNextStop = null,
         List<string>? imageUrls = null,
-        short? imageCount = null,
+        List<string>? mediaTypes = null,
         bool? isFocalPoint = null,
         short? orderIndex = null,
         Guid? voyageId = null,
@@ -120,8 +117,7 @@ public static class StopMappingExtensions
             DistanceToNextStop = distanceToNext ?? stop.DistanceToNextStop,
             ArrivalTimeToNextStop = arrivalTimeToNext ?? stop.ArrivalTimeToNextStop,
             TransportationTypeToNextStop = transportationTypeToNextStop ?? stop.TransportationTypeToNextStop,
-            ImageUrls = imageUrls ?? new List<string>(stop.ImageUrls ?? new List<string>()),
-            ImageCount = imageCount ?? stop.ImageCount,
+            MediaKeys = imageUrls ?? new List<string>(stop.MediaKeys ?? new List<string>()),
             IsFocalPoint = isFocalPoint ?? stop.IsFocalPoint,
             OrderIndex = orderIndex ?? stop.OrderIndex,
             VoyageId = voyageId ?? stop.VoyageId,

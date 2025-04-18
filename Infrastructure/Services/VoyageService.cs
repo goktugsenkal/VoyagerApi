@@ -2,18 +2,19 @@ using Core.Dtos;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
+using Core.Models.Voyage;
 
 namespace Infrastructure.Services;
 
-public class VoyageService(IVoyageRepository voyageRepository, 
-    IStopRepository stopRepository, 
-    IS3Service s3Service, 
-    IUserService userService, 
-    IUserRepository userRepository, 
+public class VoyageService(
+    IVoyageRepository voyageRepository,
+    IStopRepository stopRepository,
+    IS3Service s3Service,
+    IUserService userService,
+    IUserRepository userRepository,
     ILikeRepository likeRepository)
     : IVoyageService
 {
-
     /// <summary>
     /// Asynchronously retrieves all voyages, paginated. Maps voyages to VoyageDtos.
     /// </summary>
@@ -35,8 +36,8 @@ public class VoyageService(IVoyageRepository voyageRepository,
         var voyageDtos = voyages.Items.Select(voyage => voyage.ToDto()).ToList();
 
         // create a PagedList and return it
-        return Task.FromResult(new PagedList<VoyageDto>(voyageDtos, voyages.TotalCount, voyages.CurrentPage, voyages.PageSize));
-
+        return Task.FromResult(new PagedList<VoyageDto>(voyageDtos, voyages.TotalCount, voyages.CurrentPage,
+            voyages.PageSize));
     }
 
     public PagedList<VoyageDto> GetVoyagesFiltered(double? latitudeMin, double? latitudeMax, double? longitudeMin,
@@ -82,20 +83,21 @@ public class VoyageService(IVoyageRepository voyageRepository,
     {
         // try to get the entire voyage entity from the database
         var voyage = await voyageRepository.GetByIdAsync(voyageId);
-        
-        if(voyage == null) return null;
+
+        if (voyage == null) return null;
 
         var voyageDto = voyage.ToDto();
 
         var voyagerUser = await userRepository.GetByIdAsync(voyageDto.VoyagerUserId);
-        
+
         voyageDto.VoyagerUsername = voyagerUser?.Username ?? "Voyager User";
-        voyageDto.ProfilePictureUrl = s3Service.GeneratePreSignedDownloadUrl(voyagerUser?.ProfilePictureUrl ?? "", TimeSpan.FromMinutes(10));
+        voyageDto.ProfilePictureUrl =
+            s3Service.GeneratePreSignedDownloadUrl(voyagerUser?.ProfilePictureUrl ?? "", TimeSpan.FromMinutes(10));
         voyageDto.IsLiked = await likeRepository.ExistsAsync(voyageDto.Id, null, consumerUsedId);
 
-        if (voyageDto.ImageUrls.Any())
+        if (voyageDto.MediaUrls.Any())
         {
-            voyageDto.ImageUrls = voyageDto.ImageUrls
+            voyageDto.MediaUrls = voyageDto.MediaUrls
                 .Select(key => s3Service.GeneratePreSignedDownloadUrl(key, TimeSpan.FromMinutes(15)))
                 .ToList();
         }
@@ -104,9 +106,9 @@ public class VoyageService(IVoyageRepository voyageRepository,
         {
             foreach (var stopDto in voyageDto.Stops)
             {
-                if (stopDto != null  && stopDto.ImageUrls.Count != 0)
+                if (stopDto != null && stopDto.MediaUrls.Count != 0)
                 {
-                    stopDto.ImageUrls = stopDto.ImageUrls
+                    stopDto.MediaUrls = stopDto.MediaUrls
                         .Select(key => s3Service.GeneratePreSignedDownloadUrl(key, TimeSpan.FromMinutes(15)))
                         .ToList();
                 }
@@ -119,7 +121,7 @@ public class VoyageService(IVoyageRepository voyageRepository,
     {
         // try to get the entire voyage entity from the database
         var voyage = await voyageRepository.GetByIdAsync(voyageId);
-        
+
         return voyage ?? null;
     }
 
@@ -132,17 +134,18 @@ public class VoyageService(IVoyageRepository voyageRepository,
     public async Task<(Voyage Voyage, List<string> VoyageUploadUrls, List<StopUploadUrlsDto> StopsUploadUrls)>
         AddVoyageWithMediaAsync(CreateVoyageModel createVoyageModel, Guid userId)
     {
-        // get the voyager username from the user id
-        var voyagerUsername = await userService.GetUsernameByIdAsync(userId) ?? throw new Exception("User not found");
-        
-        // Map the request to a Voyage entity and assign the voyager user id and username.
-        var voyage = createVoyageModel.ToEntity()
-            .CopyWith(voyagerUserId: userId, voyagerUsername: voyagerUsername, stopCount: createVoyageModel.Stops.Count);   
+        var voyagerUsername = await userService.GetUsernameByIdAsync(userId)
+                              ?? throw new Exception("User not found");
 
-        // Save the voyage to get its generated ID.
+        var voyage = createVoyageModel.ToEntity()
+            .CopyWith(
+                voyagerUserId: userId,
+                voyagerUsername: voyagerUsername,
+                stopCount: createVoyageModel.Stops.Count
+            );
+
         await voyageRepository.AddAsync(voyage);
 
-        // Map stops from CreateStopModel to Stop, and assign the voyage id.
         var stops = createVoyageModel.Stops.Select(stopModel =>
         {
             var entity = stopModel.ToEntity();
@@ -150,34 +153,36 @@ public class VoyageService(IVoyageRepository voyageRepository,
             return entity;
         }).ToList();
 
-        // Save stops with relation to the Voyage.
         await stopRepository.AddRangeAsync(stops);
 
-        // Generate unique keys and pre-signed URLs for voyage images.
         var voyageUploadUrls = new List<string>();
-        
-        for (var i = 0; i < createVoyageModel.ImageCount; i++)
+        var voyageMediaTypes = createVoyageModel.MediaTypes ?? new List<string>();
+
+        foreach (var mediaType in voyageMediaTypes)
         {
-            var key = $"voyages/{voyage.Id}/images/{Guid.NewGuid()}.jpg";
-            voyage.ImageUrls.Add(key);
+            var extension = mediaType.ToLower();
+            var key = $"voyages/{voyage.Id}/media/{Guid.NewGuid()}.{extension}";
+            voyage.MediaKeys.Add(key);
             var url = s3Service.GeneratePreSignedUploadUrl(key, TimeSpan.FromMinutes(15));
             voyageUploadUrls.Add(url);
         }
 
-        // Generate keys and pre-signed URLs for each stop's images.
-        // We assume that the order of stops in createVoyageModel.Stops corresponds to the order of persisted stops.
         var stopsUploadUrls = new List<StopUploadUrlsDto>();
-        for (var i = 0; i < createVoyageModel.Stops.Count; i++)
+
+        for (int i = 0; i < createVoyageModel.Stops.Count; i++)
         {
             var stopRequest = createVoyageModel.Stops[i];
-            var stopEntity = stops[i]; // Using the same order for mapping.
-            stopEntity.ImageUrls = new List<string>();
+            var stopEntity = stops[i];
+            var stopMediaTypes = stopRequest.MediaTypes ?? new List<string>();
+
+            stopEntity.MediaKeys = new List<string>();
             var stopUrls = new List<string>();
 
-            for (var j = 0; j < stopRequest.ImageCount; j++)
+            foreach (var mediaType in stopMediaTypes)
             {
-                var key = $"voyages/{voyage.Id}/stops/{stopEntity.Id}/images/{Guid.NewGuid()}.jpg";
-                stopEntity.ImageUrls.Add(key);
+                var extension = mediaType.ToLower();
+                var key = $"voyages/{voyage.Id}/stops/{stopEntity.Id}/media/{Guid.NewGuid()}.{extension}";
+                stopEntity.MediaKeys.Add(key);
                 var url = s3Service.GeneratePreSignedUploadUrl(key, TimeSpan.FromMinutes(15));
                 stopUrls.Add(url);
             }
@@ -191,37 +196,37 @@ public class VoyageService(IVoyageRepository voyageRepository,
 
         await voyageRepository.SaveChangesAsync();
 
-        // Return the voyage and the generated upload URLs.
         return (voyage, voyageUploadUrls, stopsUploadUrls);
     }
 
-        public async Task UpdateVoyageAsync(Guid voyageId, UpdateVoyageModel updateVoyageModel)
+
+    public async Task UpdateVoyageAsync(Guid voyageId, UpdateVoyageModel updateVoyageModel)
+    {
+        // get the voyage
+        var voyage = await voyageRepository.GetByIdAsync(voyageId);
+
+        // check if voyage exists
+        if (voyage is null)
         {
-            // get the voyage
-            var voyage = await voyageRepository.GetByIdAsync(voyageId);
-            
-            // check if voyage exists
-            if (voyage is null)
-            {
-                throw new ArgumentException("gok: no voyage found with the specified id");
-            }
-            
-            // update the voyage with the model
-            voyage.UpdateFromModel(updateVoyageModel);
-            
-            // save the voyage
-            await voyageRepository.UpdateAsync(voyage);
+            throw new ArgumentException("gok: no voyage found with the specified id");
         }
 
-        public async Task DeleteVoyageAsync(Guid voyageId)
+        // update the voyage with the model
+        voyage.UpdateFromModel(updateVoyageModel);
+
+        // save the voyage
+        await voyageRepository.UpdateAsync(voyage);
+    }
+
+    public async Task DeleteVoyageAsync(Guid voyageId)
+    {
+        var voyage = await voyageRepository.GetByIdAsync(voyageId);
+
+        if (voyage is null)
         {
-            var voyage = await voyageRepository.GetByIdAsync(voyageId);
-            
-            if (voyage is null)
-            {
-                throw new ArgumentException("no voyage found with the specified id");
-            }
-            
-            await voyageRepository.DeleteAsync(voyage);
+            throw new ArgumentException("no voyage found with the specified id");
         }
+
+        await voyageRepository.DeleteAsync(voyage);
+    }
 }

@@ -1,5 +1,4 @@
-name: Voyager .NET Staging Deploy
-
+name: Staging Voyager .NET Deploy
 on:
   push:
     branches:
@@ -8,42 +7,40 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
-        with: { dotnet-version: '9.0.x' }
+        with:
+          dotnet-version: '9.0.x'
 
-      - run: dotnet restore
-      - run: dotnet build --configuration Release --no-restore
-      - run: dotnet test --no-build --verbosity normal
+      - name: Restore dependencies
+        run: dotnet restore
 
-      - name: Publish staging build
-        run: dotnet publish Api/Api.csproj -c Release -o /home/ec2-user/repos/VoyagerApi/staging-output
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
-
     steps:
-      - name: Deploy to EC2 (staging)
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          
-          ssh -o StrictHostKeyChecking=no ec2-user@ec2-13-48-203-98.eu-north-1.compute.amazonaws.com << EOF
-            echo "🚀 Deploying staging…"
-            cd /home/ec2-user/repos/VoyagerApi
-            git pull origin staging
-          
-            dotnet publish Api/Api.csproj -c Release -o /var/www/voyager-staging
-            ASPNETCORE_ENVIRONMENT=Staging dotnet ef database update -s Api/ -p Infrastructure/
-          
-            sudo systemctl restart voyager-staging
-            echo "✅ Staging restarted!"
+
+      - name: Deploy to EC2 (staging)
+        run: |
+          ssh -o StrictHostKeyChecking=no ec2-user@ec2-13-48-203-98.eu-north-1.compute.amazonaws.com << 'EOF'
+          cd /home/ec2-user/repos/VoyagerApi
+          git pull origin staging
+          dotnet publish Api/Api.csproj -c Release -o /var/www/voyager-staging
+          ASPNETCORE_ENVIRONMENT=Staging dotnet ef database update -s Api/ -p Infrastructure/
+          sudo systemctl restart voyager-staging
           EOF

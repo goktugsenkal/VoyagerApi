@@ -16,7 +16,6 @@ public class StopDto
     public short OrderIndex { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-    
-    public List<string> ImageUrls { get; set; }
-    public short ImageCount { get; set; }
+
+    public List<string> MediaUrls { get; set; } = [];
 }

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Core.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 
@@ -14,9 +15,10 @@ public class ChatHub(IChatService chatService) : Hub
     /// </summary>
     public override async Task OnConnectedAsync()
     {
-        var user = Context.User?.Identity?.Name ?? Context.ConnectionId;
-        // Notify everyone that this user is online
-        await Clients.Others.SendAsync("UserOnline", user);
+        var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                     ?? Context.ConnectionId;
+        
+        await Clients.Others.SendAsync("UserOnline", userId);
         await base.OnConnectedAsync();
     }
 

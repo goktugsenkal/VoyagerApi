@@ -90,6 +90,20 @@ try
                     Encoding.UTF8.GetBytes(builder.Configuration["AppSettings:Token"]!)),
                 ValidateIssuerSigningKey = true
             };
+            
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = ctx =>
+                {
+                    var accessToken = ctx.Request.Query["access_token"];
+                    var path = ctx.HttpContext.Request.Path;
+                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
+                    {
+                        ctx.Token = accessToken;
+                    }
+                    return Task.CompletedTask;
+                },
+            };
         });
 
     builder.Services.AddScoped<IAuthService, AuthService>();
@@ -167,7 +181,8 @@ try
 
     app.MapControllers();
 
-    app.MapHub<ChatHub>("/chatHub");
+    app.MapHub<ChatHub>("/chatHub")
+        .RequireAuthorization();
 
     app.Lifetime.ApplicationStarted.Register(() =>
     {

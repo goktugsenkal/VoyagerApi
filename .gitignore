@@ -488,3 +488,4 @@ $RECYCLE.BIN/
 swagger.json
 ModerationWorker/appsettings.json
 ModerationWorker/appsettings.Development.json
+Api/appsettings.json

@@ -61,7 +61,8 @@ jobs:
         cd /home/ec2-user/repos/VoyagerApi
         git fetch origin
         git reset --hard origin/master
-        dotnet publish /home/ec2-user/repos/VoyagerApi/Api/Api.csproj -c Release -o /var/www/voyager
+        export DOTNET_GCHeapHardLimit=773741824
+        dotnet publish /home/ec2-user/repos/VoyagerApi/Api/Api.csproj -c Release -p:PublishReadyToRun=false -o /var/www/voyager
         ASPNETCORE_ENVIRONMENT=Production dotnet ef database update -s Api/ -p Infrastructure/
         sudo systemctl restart voyager.service
         EOF

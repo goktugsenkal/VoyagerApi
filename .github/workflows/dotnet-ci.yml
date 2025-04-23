@@ -64,7 +64,9 @@ jobs:
         export DOTNET_GCHeapHardLimit=773741824
         dotnet publish /home/ec2-user/repos/VoyagerApi/Api/Api.csproj -c Release -p:PublishReadyToRun=false -o /var/www/voyager
         mv /tmp/voyager-configs/production.json /var/www/voyager/appsettings.json
+        mv /tmp/voyager-configs/production.json /home/ec2-user/repos/VoyagerApi/Api/appsettings.json
         mv /tmp/voyager-configs/staging.json /var/www/voyager/appsettings.Staging.json
+        mv /tmp/voyager-configs/staging.json /home/ec2-user/repos/VoyagerApi/Api/appsettings.Staging.json
         ASPNETCORE_ENVIRONMENT=Production dotnet ef database update -s Api/ -p Infrastructure/
         sudo systemctl restart voyager.service
         EOF

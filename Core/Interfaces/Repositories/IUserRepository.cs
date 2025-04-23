@@ -1,9 +1,11 @@
 using Core.Entities;
+using Core.Models;
 
-namespace Core.Interfaces;
+namespace Core.Interfaces.Repositories;
 
 public interface IUserRepository
 {
+    PagedList<VoyagerUser> GetAllAsPagedList(int pageNumber, int pageSize);
     Task<VoyagerUser?> GetByIdAsync(Guid id);
     Task<VoyagerUser?> GetByEmailAsync(string email);
     Task<string?> GetUsernameByIdAsync(Guid id);

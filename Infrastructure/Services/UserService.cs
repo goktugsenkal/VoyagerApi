@@ -1,6 +1,7 @@
 using Core.Dtos;
 using Core.Entities;
 using Core.Interfaces;
+using Core.Interfaces.Repositories;
 using Core.Models;
 
 namespace Infrastructure.Services;
@@ -19,7 +20,16 @@ public class UserService(
         // can return null
         return user?.Username;
     }
-    
+
+    public async Task<PagedList<VoyagerUserDto>> GetAllUsersAsync(int pageNumber, int pageSize)
+    {
+        var users = userRepository.GetAllAsPagedList(pageNumber, pageSize);
+
+        var userDtos = users.Items.Select(user => user.ToDto()).ToList();
+
+        return new PagedList<VoyagerUserDto>(userDtos, users.TotalCount, users.CurrentPage, users.PageSize);
+    }
+
     public async Task<VoyagerUser?> GetUserByIdAsync(Guid id)
     {
         //

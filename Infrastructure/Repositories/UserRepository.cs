@@ -1,5 +1,7 @@
 using Core.Entities;
 using Core.Interfaces;
+using Core.Interfaces.Repositories;
+using Core.Models;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +9,15 @@ namespace Infrastructure.Repositories;
 
 public class UserRepository(DataContext dataContext) : IUserRepository
 {
+    public PagedList<VoyagerUser> GetAllAsPagedList(int pageNumber, int pageSize)
+    {
+        var users = dataContext.Users
+            .OrderBy(u => u.CreatedAt)
+            .AsQueryable();
+
+        return PagedList<VoyagerUser>.CreatePagedList(users, pageNumber, pageSize);
+    }
+
     public async Task<VoyagerUser?> GetByIdAsync(Guid id)
     {
         return await dataContext.Users.FirstOrDefaultAsync(u => u.Id == id);

@@ -56,33 +56,43 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh -o StrictHostKeyChecking=no ec2-user@ec2-13-48-203-98.eu-north-1.compute.amazonaws.com << EOF
-        echo "Connection successful!"
-        
-        cd /home/ec2-user/repos/VoyagerApi
 
-        git fetch origin
-        git reset --hard origin/master
+        ssh -o StrictHostKeyChecking=no ec2-user@ec2-13-48-203-98.eu-north-1.compute.amazonaws.com "
+          set -e  # exit immediately on error
+          echo '✅ SSH connection successful'
 
-        CONFIG_DIR=/home/ec2-user/voyager-configs
-        TMP_CONFIG_DIR=/tmp/voyager-config-backup
-        mkdir -p $TMP_CONFIG_DIR
+          cd /home/ec2-user/repos/VoyagerApi
 
-        cp $CONFIG_DIR/production.json $TMP_CONFIG_DIR/production.json
-        cp $CONFIG_DIR/staging.json $TMP_CONFIG_DIR/staging.json
+          echo '📥 Pulling latest from master...'
+          git fetch origin
+          git reset --hard origin/master
 
-        export DOTNET_GCHeapHardLimit=773741824
+          echo '📦 Backing up config files...'
+          CONFIG_DIR=/home/ec2-user/voyager-configs
+          TMP_CONFIG_DIR=/tmp/voyager-config-backup
+          mkdir -p \$TMP_CONFIG_DIR
 
-        dotnet publish /home/ec2-user/repos/VoyagerApi/Api/Api.csproj \
-          -c Release -p:PublishReadyToRun=false -o /var/www/voyager
+          if [ ! -f \$CONFIG_DIR/production.json ]; then echo '❌ production.json missing'; exit 1; fi
+          if [ ! -f \$CONFIG_DIR/staging.json ]; then echo '❌ staging.json missing'; exit 1; fi
 
-        cp $TMP_CONFIG_DIR/production.json /var/www/voyager/appsettings.json
-        cp $TMP_CONFIG_DIR/production.json /home/ec2-user/repos/VoyagerApi/Api/appsettings.json
-        cp $TMP_CONFIG_DIR/staging.json /var/www/voyager/appsettings.Staging.json
-        cp $TMP_CONFIG_DIR/staging.json /home/ec2-user/repos/VoyagerApi/Api/appsettings.Staging.json
+          cp \$CONFIG_DIR/production.json \$TMP_CONFIG_DIR/production.json
+          cp \$CONFIG_DIR/staging.json \$TMP_CONFIG_DIR/staging.json
 
-        ASPNETCORE_ENVIRONMENT=Production dotnet ef database update -s Api/ -p Infrastructure/
+          echo '🛠️ Publishing app...'
+          export DOTNET_GCHeapHardLimit=773741824
+          dotnet publish Api/Api.csproj -c Release -p:PublishReadyToRun=false -o /var/www/voyager
 
-        sudo systemctl restart voyager.service
+          echo '🔁 Restoring configs...'
+          cp \$TMP_CONFIG_DIR/production.json /var/www/voyager/appsettings.json
+          cp \$TMP_CONFIG_DIR/production.json Api/appsettings.json
+          cp \$TMP_CONFIG_DIR/staging.json /var/www/voyager/appsettings.Staging.json
+          cp \$TMP_CONFIG_DIR/staging.json Api/appsettings.Staging.json
 
-        EOF
+          echo '🧬 Running EF migrations...'
+          ASPNETCORE_ENVIRONMENT=Production dotnet ef database update -s Api/ -p Infrastructure/
+
+          echo '🚀 Restarting service...'
+          sudo systemctl restart voyager.service
+
+          echo '✅ Deployment complete.'
+        "

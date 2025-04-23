@@ -30,6 +30,22 @@ public class UserController(IAuthService authService,
         return Ok(user);
     }
     
+    [HttpGet]
+    [Authorize]
+    public async Task<ActionResult<PagedList<VoyagerUserDto>>> GetUsers(int pageNumber = 1, int pageSize = 10)
+    {
+        var voyagerUserId = GetUserIdFromTokenClaims();
+        if (voyagerUserId is null)
+            return Unauthorized("User ID not found in token claims.");
+        
+        if (pageSize < 1 || pageNumber < 1 || pageSize > 20)
+        {
+            return BadRequest("Page number and page size must be greater than 1 and page size must be less than or equal to 20.");
+        }
+        
+        return await userService.GetAllUsersAsync(pageNumber, pageSize); // value is checked for null
+    }
+    
     [HttpGet("{userId}")]
     [Authorize]
     public async Task<ActionResult<VoyagerUserDto>> GetUserById(string userId)

@@ -66,6 +66,7 @@ jobs:
 
           cd /home/ec2-user/repos/VoyagerApi
 
+          echo 'Pulling master branch...'
           git fetch origin
           git reset --hard origin/master
 
@@ -73,19 +74,23 @@ jobs:
           TMP_CONFIG_DIR=/tmp/voyager-config-backup
           mkdir -p \$TMP_CONFIG_DIR
 
-
+          echo 'Backing up production.json...'
           if [ ! -f \$CONFIG_DIR/production.json ]; then echo '❌ production.json missing'; exit 1; fi
 
           cp \$CONFIG_DIR/production.json \$TMP_CONFIG_DIR/production.json
 
           export DOTNET_GCHeapHardLimit=773741824
 
+          echo 'Publishing MASTER build...'
           dotnet publish Api/Api.csproj -c Release -p:PublishReadyToRun=false -o /var/www/voyager
 
+          echo 'Restoring MASTER configs...'
           cp \$TMP_CONFIG_DIR/production.json /var/www/voyager/appsettings.json
           cp \$TMP_CONFIG_DIR/production.json Api/appsettings.json
 
+          echo 'Running database migrations for MASTER...'
           ASPNETCORE_ENVIRONMENT=Production dotnet ef database update -s Api/ -p Infrastructure/ --no-build
 
+          echo 'Restarting MASTER service...'
           sudo systemctl restart voyager.service
         "

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Api.Chat.Hubs;
 using Api.Middlewares;
 using Api.Misc;
 using Core.Constants;
@@ -12,6 +13,7 @@ using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -108,6 +110,22 @@ try
     builder.Services.AddScoped<ISearchRepository, SearchRepository>();
     builder.Services.AddScoped<ISearchService, SearchService>();
     
+    builder.Services.AddScoped<IChatService, ChatService>();
+    builder.Services.AddSignalR();
+
+    // builder.WebHost.ConfigureKestrel((opt) =>
+    // {
+    //     opt.ListenAnyIP(5002, options =>
+    //     {
+    //         options.Protocols = HttpProtocols.Http1AndHttp2;
+    //     });
+    //     opt.ListenAnyIP(5003, options =>
+    //     {
+    //         options.UseHttps();
+    //     });
+    // });
+
+    
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowMySite", policy =>
@@ -148,6 +166,8 @@ try
     app.UseAuthorization();
 
     app.MapControllers();
+
+    app.MapHub<ChatHub>("/chatHub");
 
     app.Lifetime.ApplicationStarted.Register(() =>
     {

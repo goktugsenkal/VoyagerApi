@@ -1,0 +1,81 @@
+name: Voyager .NET Staging Deploy
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Deploy to EC2 (staging)
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          ssh -o StrictHostKeyChecking=no ec2-user@ec2-13-48-203-98.eu-north-1.compute.amazonaws.com "
+            set -e
+
+            echo '✅ SSH connection successful'
+
+            export PATH=\$PATH:\$HOME/.dotnet/tools
+
+            cd /home/ec2-user/repos/VoyagerApi
+
+            echo '📥 Pulling staging branch...'
+            git fetch origin
+            git reset --hard origin/staging
+
+            CONFIG_DIR=/home/ec2-user/voyager-configs
+            TMP_CONFIG_DIR=/tmp/voyager-config-backup
+            mkdir -p \$TMP_CONFIG_DIR
+
+            echo '📦 Validating config files...'
+            if [ ! -f \$CONFIG_DIR/staging.json ]; then echo '❌ staging.json missing'; exit 1; fi
+
+            cp \$CONFIG_DIR/staging.json \$TMP_CONFIG_DIR/staging.json
+
+            export DOTNET_GCHeapHardLimit=773741824
+
+            echo '⚙️ Publishing STAGING build...'
+            dotnet publish Api/Api.csproj -c Release -p:PublishReadyToRun=false -o /var/www/voyager
+
+            echo '🧬 Restoring STAGING configs...'
+            cp \$TMP_CONFIG_DIR/staging.json /var/www/voyager/appsettings.json
+            cp \$TMP_CONFIG_DIR/staging.json Api/appsettings.json
+
+            echo '📂 Running EF migrations for STAGING...'
+            ASPNETCORE_ENVIRONMENT=Staging dotnet ef database update -s Api/ -p Infrastructure/ --no-build
+
+            echo '🚀 Restarting STAGING service...'
+            sudo systemctl restart voyager-staging.service  # 👈 Make sure you use the correct service name
+          "
+

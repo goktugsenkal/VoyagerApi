@@ -73,6 +73,7 @@ jobs:
           TMP_CONFIG_DIR=/tmp/voyager-config-backup
           mkdir -p \$TMP_CONFIG_DIR
 
+
           if [ ! -f \$CONFIG_DIR/production.json ]; then echo '❌ production.json missing'; exit 1; fi
 
           cp \$CONFIG_DIR/production.json \$TMP_CONFIG_DIR/production.json
@@ -88,4 +89,3 @@ jobs:
 
           sudo systemctl restart voyager.service
         "
-

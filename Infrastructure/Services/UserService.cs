@@ -1,6 +1,7 @@
 using Core.Dtos;
 using Core.Entities;
 using Core.Interfaces;
+using Core.Interfaces.Repositories;
 using Core.Models;
 
 namespace Infrastructure.Services;
@@ -19,7 +20,26 @@ public class UserService(
         // can return null
         return user?.Username;
     }
-    
+
+    public async Task<PagedList<VoyagerUserDto>> GetAllUsersAsync(int pageNumber, int pageSize)
+    {
+        var users = userRepository.GetAllAsPagedList(pageNumber, pageSize);
+
+        var userDtos = users.Items.Select(user => 
+        {
+            var userDto = user.ToDto();
+
+            if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+                userDto.ProfilePictureUrl = s3Service.GeneratePreSignedDownloadUrl(user.ProfilePictureUrl, TimeSpan.FromMinutes(15));
+            if (!string.IsNullOrWhiteSpace(user.BannerPictureUrl))
+                userDto.BannerPictureUrl = s3Service.GeneratePreSignedDownloadUrl(user.BannerPictureUrl, TimeSpan.FromMinutes(15));
+
+            return userDto;
+        }).ToList();
+
+        return new PagedList<VoyagerUserDto>(userDtos, users.TotalCount, users.CurrentPage, users.PageSize);
+    }
+
     public async Task<VoyagerUser?> GetUserByIdAsync(Guid id)
     {
         //

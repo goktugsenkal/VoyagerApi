@@ -1,5 +1,4 @@
 using Core.Dtos;
-using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -30,7 +29,7 @@ public class UserController(IAuthService authService,
         return Ok(user);
     }
     
-    [HttpGet]
+    [HttpGet] 
     [Authorize]
     public async Task<ActionResult<PagedList<VoyagerUserDto>>> GetUsers(int pageNumber = 1, int pageSize = 10)
     {

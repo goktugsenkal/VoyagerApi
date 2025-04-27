@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

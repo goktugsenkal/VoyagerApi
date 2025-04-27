@@ -1,5 +1,4 @@
 using Core.Interfaces;
-using Microsoft.AspNetCore.SignalR;
 
 namespace Infrastructure.Services;
 

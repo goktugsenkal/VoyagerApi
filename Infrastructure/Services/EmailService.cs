@@ -1,7 +1,4 @@
-using System.Net;
-using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using Core.Interfaces;
 using Core.Models;
 using MailKit.Net.Smtp;

@@ -34,8 +34,10 @@ public class VoyagerUser : UpdatableBaseEntity
     public bool LockoutEnabled { get; set; }
     public DateTime? LockoutEnd { get; set; }
     
-    public string? RefreshToken { get; set; }
-    public DateTime? RefreshTokenExpiryTime { get; set; }
+    // public string? RefreshToken { get; set; }
+    // public DateTime? RefreshTokenExpiryTime { get; set; }
+    
+    public List<RefreshToken> RefreshTokens { get; set; }
 
     public ICollection<Voyage> Voyages { get; set; }
 }

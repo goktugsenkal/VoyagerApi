@@ -18,6 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NLog;
 using NLog.Web;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();

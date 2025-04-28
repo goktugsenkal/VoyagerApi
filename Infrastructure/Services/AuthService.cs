@@ -71,13 +71,17 @@ public class AuthService(
 
         public async Task<CheckAvailabilityDto> CheckAvailabilityAsync(CheckAvailabilityModel request)
         {
-            var usernameAvailable = await context.Users.AnyAsync(u => u.Username == request.Username);
-            var emailAvailable = await context.Users.AnyAsync(u => u.Email == request.Email);
+            var badWordsService = new BadWordsService();
+            
+            var emailUnavailable = await context.Users.AnyAsync(u => u.Email == request.Email);
+            var usernameUnavailable = await context.Users.AnyAsync(u => u.Username == request.Username)
+                || badWordsService.ContainsBadWord(request.Username);
+            
             
             var response = new CheckAvailabilityDto
             {
-                EmailAvailable = !emailAvailable,
-                UsernameAvailable = !usernameAvailable
+                EmailAvailable = !emailUnavailable,
+                UsernameAvailable = !usernameUnavailable
             };
 
             return response;

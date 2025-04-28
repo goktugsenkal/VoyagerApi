@@ -1,6 +1,5 @@
 using Core.Dtos;
 using Core.Entities;
-using Core.Enums;
 using Core.Interfaces;
 using Core.Models;
 using Microsoft.AspNetCore.Authorization;

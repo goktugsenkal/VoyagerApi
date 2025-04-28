@@ -26,9 +26,8 @@ public class RegisterModel
     [DataType(DataType.Password)]
     [PasswordStrength(MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.")]
     public required string Password { get; set; }
-
-    [Phone(ErrorMessage = "Invalid phone number.")]
-    public string PhoneNumber { get; set; }
+    
+    public string PhoneNumber { get; set; } = string.Empty;
 }
 
 public class PasswordStrengthAttribute : ValidationAttribute

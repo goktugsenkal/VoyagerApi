@@ -17,231 +17,264 @@ using Microsoft.IdentityModel.Tokens;
 namespace Infrastructure.Services;
 
 public class AuthService(
-    DataContext context, 
-    IConfiguration configuration, 
-    IUserService userService, 
-    IPasswordHasher<VoyagerUser> passwordHasher, 
+    DataContext context,
+    IConfiguration configuration,
+    IUserService userService,
+    IPasswordHasher<VoyagerUser> passwordHasher,
     IEmailService emailService) : IAuthService
+{
+    private readonly byte[] _secretKey = Encoding.UTF8.GetBytes(configuration["SecretKey"]);
+
+    public async Task<TokenResponseDto?> LoginAsync(LoginModel request, string ipAddress)
     {
-        private readonly byte[] _secretKey = Encoding.UTF8.GetBytes(configuration["SecretKey"]);
-
-        public async Task<TokenResponseDto?> LoginAsync(LoginModel request)
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+        if (user is null)
         {
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
-            if (user is null)
-            {
-                return null;
-            }
-            
-            if (user.LockoutEnabled && user.LockoutEnd > DateTime.UtcNow)
-                throw new Exception("Account is locked. Try again later.");
+            return null;
+        }
 
-            if (passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password)
-                == PasswordVerificationResult.Failed)
-            {
-                user.AccessFailedCount += 1;
-                if (user.AccessFailedCount >= 200) // todo: drop this to ~5 for prod 
-                {
-                    user.LockoutEnabled = true;
-                    user.LockoutEnd = DateTime.UtcNow.AddMinutes(10);
-                }
+        if (user.LockoutEnabled && user.LockoutEnd > DateTime.UtcNow)
+            throw new Exception("Account is locked. Try again later.");
 
-                await context.SaveChangesAsync();
-                return null;
+        if (passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password)
+            == PasswordVerificationResult.Failed)
+        {
+            user.AccessFailedCount += 1;
+            if (user.AccessFailedCount >= 200) // todo: drop this to ~5 for prod 
+            {
+                user.LockoutEnabled = true;
+                user.LockoutEnd = DateTime.UtcNow.AddMinutes(10);
             }
-            
-            // Successful login
-            user.AccessFailedCount = 0;
-            user.LockoutEnabled = false;
-            user.LockoutEnd = null;
-                
+
             await context.SaveChangesAsync();
-                
-            return await CreateTokenResponse(user);
+            return null;
         }
 
-        private async Task<TokenResponseDto> CreateTokenResponse(VoyagerUser? user)
+        // Successful login
+        user.AccessFailedCount = 0;
+        user.LockoutEnabled = false;
+        user.LockoutEnd = null;
+
+        await context.SaveChangesAsync();
+
+        return await CreateTokenResponse(user, request.DeviceId, ipAddress);
+    }
+
+    private async Task<TokenResponseDto> CreateTokenResponse(VoyagerUser? user, Guid deviceId, string ipAddress)
+    {
+        return new TokenResponseDto
         {
-            return new TokenResponseDto
-            {
-                AccessToken = CreateToken(user),
-                RefreshToken = await GenerateAndSaveRefreshTokenAsync(user)
-            };
-        }
+            AccessToken = CreateToken(user),
+            RefreshToken = await GenerateAndSaveRefreshTokenAsync(user, deviceId, ipAddress)
+        };
+    }
 
-        public async Task<CheckAvailabilityDto> CheckAvailabilityAsync(CheckAvailabilityModel request)
+    public async Task<CheckAvailabilityDto> CheckAvailabilityAsync(CheckAvailabilityModel request)
+    {
+        var badWordsService = new BadWordsService();
+
+        var emailUnavailable = await context.Users.AnyAsync(u => u.Email == request.Email);
+        var usernameUnavailable = await context.Users.AnyAsync(u => u.Username == request.Username)
+                                  || badWordsService.ContainsBadWord(request.Username);
+
+
+        var response = new CheckAvailabilityDto
         {
-            var badWordsService = new BadWordsService();
-            
-            var emailUnavailable = await context.Users.AnyAsync(u => u.Email == request.Email);
-            var usernameUnavailable = await context.Users.AnyAsync(u => u.Username == request.Username)
-                || badWordsService.ContainsBadWord(request.Username);
-            
-            
-            var response = new CheckAvailabilityDto
-            {
-                EmailAvailable = !emailUnavailable,
-                UsernameAvailable = !usernameUnavailable
-            };
+            EmailAvailable = !emailUnavailable,
+            UsernameAvailable = !usernameUnavailable
+        };
 
-            return response;
-        }
+        return response;
+    }
 
-        public async Task<VoyagerUser?> RegisterAsync(RegisterModel request)
+    public async Task<VoyagerUser?> RegisterAsync(RegisterModel request)
+    {
+        if (await context.Users.AnyAsync(u => u.Username == request.Username) ||
+            await context.Users.AnyAsync(u => u.Email == request.Email))
         {
-            if (await context.Users.AnyAsync(u => u.Username == request.Username) ||
-                await context.Users.AnyAsync(u => u.Email == request.Email))
-            {
-                return null;
-            }
-
-            var user = new VoyagerUser
-            {
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                Username = request.Username,
-                NormalizedUsername = request.Username.Normalize().ToUpper(),
-                Email = request.Email,
-                NormalizedEmail = request.Email.Normalize().ToUpper(),
-                Bio = request.Bio,
-                PhoneNumber = request.PhoneNumber,
-                CreatedAt = DateTime.UtcNow
-            };
-            var hashedPassword = passwordHasher.HashPassword(user, request.Password);
-
-            user.Username = request.Username;
-            user.PasswordHash = hashedPassword;
-
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
-
-            return user;
+            return null;
         }
 
-        public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestModel request)
+        var user = new VoyagerUser
         {
-            var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
-            if (user is null)
-                return null;
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Username = request.Username,
+            NormalizedUsername = request.Username.Normalize().ToUpper(),
+            Email = request.Email,
+            NormalizedEmail = request.Email.Normalize().ToUpper(),
+            Bio = request.Bio,
+            PhoneNumber = request.PhoneNumber,
+            CreatedAt = DateTime.UtcNow
+        };
+        var hashedPassword = passwordHasher.HashPassword(user, request.Password);
 
-            return await CreateTokenResponse(user);
-        }
+        user.Username = request.Username;
+        user.PasswordHash = hashedPassword;
 
-        public async Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordModel model)
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        return user;
+    }
+
+    public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestModel req, string ipAddress)
+    {
+        var rt = await GetValidRefreshTokenAsync(req.UserId, req.RefreshToken, req.DeviceId);
+        if (rt == null)
+            return null;
+
+        // revoke the old one
+        rt.RevokedAt       = DateTime.UtcNow;
+        rt.RevokedByIp   = ipAddress;
+        // rotate
+        var newToken      = GenerateRefreshToken();
+        rt.ReplacedByToken = newToken;
+
+        // create a brand-new token record
+        var newRt = new RefreshToken {
+            Token        = newToken,
+            DeviceId     = req.DeviceId,
+            ExpiresAt      = DateTime.UtcNow.AddDays(7),
+            CreatedAt      = DateTime.UtcNow,
+            CreatedByIp  = ipAddress,
+            UserId       = req.UserId
+        };
+        context.RefreshTokens.Add(newRt);
+        await context.SaveChangesAsync();
+
+        // return new pair
+        var user = await context.Users.FindAsync(req.UserId);
+        return new TokenResponseDto {
+            AccessToken  = CreateToken(user!),
+            RefreshToken = newToken
+        };
+    }
+
+
+    public async Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordModel model)
+    {
+        // todo: add a TokenVersion or PasswordChangedAt field to the users table to invalidate old tokens
+        var user = await userService.GetUserByIdAsync(userId);
+
+        if (user == null)
+            throw new KeyNotFoundException("User not found.");
+
+        var passwordVerification = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, model.CurrentPassword);
+        if (passwordVerification == PasswordVerificationResult.Failed)
+            throw new UnauthorizedAccessException("Current password is incorrect.");
+
+        user.PasswordHash = passwordHasher.HashPassword(user, model.NewPassword);
+        await userService.UpdateUserAsync(user); // persist change
+
+        return true;
+    }
+
+
+    private async Task<RefreshToken?> GetValidRefreshTokenAsync(Guid userId, string token, Guid deviceId)
+    {
+        return await context.RefreshTokens
+            .SingleOrDefaultAsync(rt =>
+                rt.UserId   == userId
+                && rt.Token    == token
+                && rt.DeviceId == deviceId
+                && rt.RevokedAt  == null
+                && rt.ExpiresAt  > DateTime.UtcNow);
+    }
+
+
+    private string GenerateRefreshToken()
+    {
+        var randomNumber = new byte[32];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
+    }
+
+
+    private async Task<string> GenerateAndSaveRefreshTokenAsync(VoyagerUser user, Guid deviceId, string ipAddress)
+    {
+        var token = GenerateRefreshToken();
+        var rt = new RefreshToken
         {
-            // todo: add a TokenVersion or PasswordChangedAt field to the users table to invalidate old tokens
-            var user = await userService.GetUserByIdAsync(userId);
-
-            if (user == null)
-                throw new KeyNotFoundException("User not found.");
-
-            var passwordVerification = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, model.CurrentPassword);
-            if (passwordVerification == PasswordVerificationResult.Failed)
-                throw new UnauthorizedAccessException("Current password is incorrect.");
-
-            user.PasswordHash = passwordHasher.HashPassword(user, model.NewPassword);
-            await userService.UpdateUserAsync(user); // persist change
-
-            return true;
-        }
+            Token = token,
+            DeviceId = deviceId,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            CreatedAt = DateTime.UtcNow,
+            CreatedByIp = ipAddress,
+            UserId = user.Id
+        };
+        context.RefreshTokens.Add(rt);
+        await context.SaveChangesAsync();
+        return token;
+    }
 
 
-
-        private async Task<VoyagerUser?> ValidateRefreshTokenAsync(Guid userId, string refreshToken)
+    private string CreateToken(VoyagerUser user)
+    {
+        var claims = new List<Claim>
         {
-            var user = await context.Users.FindAsync(userId);
-            if (user is null || user.RefreshToken != refreshToken
-                || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
-            {
-                return null;
-            }
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+        };
 
-            return user;
-        }
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(configuration.GetValue<string>("AppSettings:Token")!));
 
-        private string GenerateRefreshToken()
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
+
+        var tokenDescriptor = new JwtSecurityToken(
+            issuer: configuration.GetValue<string>("AppSettings:Issuer"),
+            audience: configuration.GetValue<string>("AppSettings:Audience"),
+            claims: claims,
+            expires: DateTime.UtcNow.AddDays(1),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+    }
+
+    public async Task SendVerificationEmailAsync(string to, string? username, Guid userId)
+    {
+        var token = GenerateAccountActionToken(userId, "VerifyEmail");
+        var encodedToken = WebUtility.UrlEncode(token);
+        var link = $"https://voyagerapi.com.tr/api/auth/verify-email?userId={userId}&token={encodedToken}";
+
+        var body = $"""
+                        <p>Hello {username ?? "Voyager User"},</p>
+                        <p>Please verify your email by clicking the link below:</p>
+                        <p><a href='{link}'>Verify Email</a></p>
+                        <p>If you did not request this, please ignore this email.</p>
+                    """;
+
+        var emailModel = new EmailModel
         {
-            var randomNumber = new byte[32];
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);
-        }
+            To = to,
+            From = "noreply@voyagerapi.com.tr",
+            Subject = "Verify Your Email Address",
+            Body = body
+        };
+
+        await emailService.SendEmailAsync(emailModel);
+    }
+
+    public async Task<bool> VerifyEmailAsync(Guid userId, string token)
+    {
+        // The internal token validation is hidden.
+        if (!ValidateAccountActionToken(token, "VerifyEmail", out Guid tokenUserId) || tokenUserId != userId)
+            return false;
+
+        var user = await userService.GetUserByIdAsync(userId);
+        if (user == null)
+            return false;
+
+        user.EmailConfirmed = true;
+        await userService.UpdateUserAsync(user);
+        return true;
+    }
 
 
-        private async Task<string> GenerateAndSaveRefreshTokenAsync(VoyagerUser user)
-        {
-            var refreshToken = GenerateRefreshToken();
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-            await context.SaveChangesAsync();
-            return refreshToken;
-        }
-
-        private string CreateToken(VoyagerUser user)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
-            };
-
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(configuration.GetValue<string>("AppSettings:Token")!));
-
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
-
-            var tokenDescriptor = new JwtSecurityToken(
-                issuer: configuration.GetValue<string>("AppSettings:Issuer"),
-                audience: configuration.GetValue<string>("AppSettings:Audience"),
-                claims: claims,
-                expires: DateTime.UtcNow.AddDays(1),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
-        }
-
-        public async Task SendVerificationEmailAsync(string to, string? username, Guid userId)
-        {
-            var token = GenerateAccountActionToken(userId, "VerifyEmail");
-            var encodedToken = WebUtility.UrlEncode(token);
-            var link = $"https://voyagerapi.com.tr/api/auth/verify-email?userId={userId}&token={encodedToken}";
-
-            var body = $"""
-                <p>Hello {username ?? "Voyager User"},</p>
-                <p>Please verify your email by clicking the link below:</p>
-                <p><a href='{link}'>Verify Email</a></p>
-                <p>If you did not request this, please ignore this email.</p>
-            """;
-
-            var emailModel = new EmailModel
-            {
-                To = to,
-                From = "noreply@voyagerapi.com.tr",
-                Subject = "Verify Your Email Address",
-                Body = body
-            };
-
-            await emailService.SendEmailAsync(emailModel);
-        }
-        
-        public async Task<bool> VerifyEmailAsync(Guid userId, string token)
-        {
-            // The internal token validation is hidden.
-            if (!ValidateAccountActionToken(token, "VerifyEmail", out Guid tokenUserId) || tokenUserId != userId)
-                return false;
-
-            var user = await userService.GetUserByIdAsync(userId);
-            if (user == null)
-                return false;
-
-            user.EmailConfirmed = true;
-            await userService.UpdateUserAsync(user);
-            return true;
-        }
-
-        
-        public async Task SendPasswordResetEmailAsync(string email)
+    public async Task SendPasswordResetEmailAsync(string email)
     {
         var user = await userService.GetUserByEmailAsync(email);
         if (user == null)
@@ -249,16 +282,16 @@ public class AuthService(
             // avoid leaking information: if user doesn't exist, do nothing.
             return;
         }
-        
+
         // generate a generic account action token for resetting the password.
         var token = GenerateAccountActionToken(user.Id, "ResetPassword");
         token = WebUtility.UrlEncode(token);
-        
-        
+
+
         // todo: configure for deeplink for Flutter app
         var frontendUrl = configuration["Flutter:ResetPasswordUrl"];
         var resetLink = $"https://voyagerapi.com.tr/reset-password?email={email}&token={token}";
-        
+
         var emailModel = new EmailModel
         {
             To = email,
@@ -282,10 +315,10 @@ public class AuthService(
                     """
         };
         Console.WriteLine(resetLink);
-        
+
         await emailService.SendEmailAsync(emailModel);
     }
-    
+
     public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword)
     {
         var user = await userService.GetUserByEmailAsync(email);
@@ -293,34 +326,34 @@ public class AuthService(
         {
             return false;
         }
-        
+
         // the browser does this automatically, so it's not needed
         // token = WebUtility.UrlDecode(token);
-        
+
         if (!ValidateAccountActionToken(token, "ResetPassword", out Guid tokenUserId))
         {
             return false;
         }
-        
+
         if (user.Id != tokenUserId)
         {
             return false;
         }
-        
+
         user.PasswordHash = passwordHasher.HashPassword(user, newPassword);
         await userService.UpdateUserAsync(user);
         return true;
     }
-    
+
     #region Account Action Token Generation and Validation
-    
+
     private class AccountActionTokenPayload
     {
         public Guid UserId { get; set; }
         public DateTime Timestamp { get; set; }
         public string Action { get; set; }
     }
-    
+
     private string GenerateAccountActionToken(Guid userId, string action)
     {
         var payload = new AccountActionTokenPayload
@@ -373,4 +406,4 @@ public class AuthService(
     }
 
     #endregion
-    }
+}

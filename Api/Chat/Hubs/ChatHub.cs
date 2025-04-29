@@ -15,10 +15,15 @@ public class ChatHub(IChatService chatService) : Hub
     /// </summary>
     public override async Task OnConnectedAsync()
     {
+        // Get user ID
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value 
                      ?? Context.ConnectionId;
         
+        // figure out what the fuck rooms and groups are
+            
+        // Notify everyone that this user came online
         await Clients.Others.SendAsync("UserOnline", userId);
+        
         await base.OnConnectedAsync();
     }
 
@@ -27,9 +32,10 @@ public class ChatHub(IChatService chatService) : Hub
     /// </summary>
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var user = Context.User?.Identity?.Name ?? Context.ConnectionId;
+        // Get user ID
+        var userId = Context.User?.Identity?.Name ?? Context.ConnectionId;
         // Notify everyone that this user went offline
-        await Clients.Others.SendAsync("UserOffline", user);
+        await Clients.Others.SendAsync("UserOffline", userId);
 
         // Clean up from any groups they were in
         foreach (var kvp in _groupMembers)
@@ -45,112 +51,125 @@ public class ChatHub(IChatService chatService) : Hub
     /// Join a chat room (group).  
     /// Adds the caller to the group and tracks membership.
     /// </summary>
-    /// <param name="roomName">Logical name of the chat room.</param>
-    public async Task JoinRoom(string roomName)
+    /// <param name="roomId">Pragmatically id based name of the chat room.</param>
+    public async Task JoinRoom(string roomId)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, roomName);
+        // Join the group
+        await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
 
         // Track membership
-        if (!_groupMembers.ContainsKey(roomName))
-            _groupMembers[roomName] = new List<string>();
-        _groupMembers[roomName].Add(Context.ConnectionId);
+        if (!_groupMembers.ContainsKey(roomId))
+            _groupMembers[roomId] = new List<string>();
+        _groupMembers[roomId].Add(Context.ConnectionId);
 
         // Notify others in the room
-        await Clients.Group(roomName).SendAsync("UserJoined", roomName, Context.ConnectionId);
+        await Clients.Group(roomId).SendAsync("UserJoined", roomId, Context.ConnectionId);
     }
 
     /// <summary>
     /// Leave a chat room (group).  
     /// Removes the caller from the group and membership tracking.
     /// </summary>
-    /// <param name="roomName">Logical name of the chat room.</param>
-    public async Task LeaveRoom(string roomName)
+    /// <param name="roomId">Logical name of the chat room.</param>
+    public async Task LeaveRoom(string roomId)
     {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomName);
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
 
-        if (_groupMembers.ContainsKey(roomName))
-            _groupMembers[roomName].Remove(Context.ConnectionId);
+        if (_groupMembers.ContainsKey(roomId))
+            _groupMembers[roomId].Remove(Context.ConnectionId);
 
-        await Clients.Group(roomName).SendAsync("UserLeft", roomName, Context.ConnectionId);
+        await Clients.Group(roomId).SendAsync("UserLeft", roomId, Context.ConnectionId);
     }
 
     /// <summary>
     /// Send a message to everyone in a room.
     /// </summary>
-    /// <param name="roomName">Target room name.</param>
-    /// <param name="user">Sender identifier.</param>
+    /// <param name="roomId">Target room name.</param>
+    /// <param name="userId">Sender identifier.</param>
+    /// <param name="messageId">global message id</param>
     /// <param name="message">Message text.</param>
-    public async Task SendMessage(string roomName, string user, string message)
+    /// <param name="voyageId">If the message contains a voyage, its ID will be included</param>
+    public async Task SendMessage(string roomId, string userId, string messageId, string message, string? voyageId = null)
     {
-        // Persist message to DB here if required
-        await Clients.Group(roomName)
-                     .SendAsync("ReceiveMessage", roomName, user, message, DateTime.UtcNow);
-    }
-
-    /// <summary>
-    /// Send a private one‑to‑one message.
-    /// </summary>
-    /// <param name="targetConnectionId">Connection ID of the recipient.</param>
-    /// <param name="fromUser">Sender identifier.</param>
-    /// <param name="message">Message text.</param>
-    public async Task SendPrivateMessage(string targetConnectionId, string fromUser, string message)
-    {
-        await Clients.Client(targetConnectionId)
-                     .SendAsync("ReceivePrivateMessage", Context.ConnectionId, fromUser, message, DateTime.UtcNow);
+        // if voyageId is not null, then the message contains a voyage
+        if (voyageId is not null)
+        {
+            // send message with voyageId
+            await Clients.Group(roomId)
+                .SendAsync("MessageReceived", roomId, userId, messageId, message, DateTime.UtcNow, voyageId);
+        }
+        // if voyageId is null, then the message does not contain a voyage
+        else
+        {
+            // send message
+            await Clients.Group(roomId)
+                .SendAsync("MessageReceived", roomId, userId, messageId, message, DateTime.UtcNow);
+        }
     }
 
     /// <summary>
     /// Notify others in the room that the caller is typing.
     /// </summary>
-    /// <param name="roomName">Room where typing is happening.</param>
-    /// <param name="user">User who is typing.</param>
-    public async Task Typing(string roomName, string user)
-        => await Clients.Group(roomName)
-                        .SendAsync("UserTyping", roomName, user);
+    /// <param name="roomId">Room where typing is happening.</param>
+    /// <param name="userId">User who is typing.</param>
+    public async Task StartTyping(string roomId, string userId)
+        => await Clients.Group(roomId)
+                        .SendAsync("UserTyping", roomId, userId);
+    
+    /// <summary>
+    /// Notify others in the room that the caller is typing.
+    /// </summary>
+    /// <param name="roomId">Room where typing is happening.</param>
+    /// <param name="userId">User who is typing.</param>
+    public async Task StopTyping(string roomId, string userId)
+        => await Clients.Group(roomId)
+                        .SendAsync("UserStoppedTyping", roomId, userId);
+    
 
     /// <summary>
     /// Send a read receipt for a given message in a room.
     /// </summary>
-    /// <param name="roomName">Room in which the message was read.</param>
+    /// <param name="roomId">Room in which the message was read.</param>
     /// <param name="messageId">Identifier of the message.</param>
-    /// <param name="user">User who read it.</param>
-    public async Task SendReadReceipt(string roomName, string messageId, string user)
-        => await Clients.Group(roomName)
-                        .SendAsync("MessageRead", roomName, messageId, user, DateTime.UtcNow);
+    /// <param name="userId">User who read it. Good for group chats.</param>
+    public async Task MarkAsRead(string roomId, string messageId, string userId)
+        => await Clients.Group(roomId)
+                        .SendAsync("ReadReceipt", roomId, messageId, userId, DateTime.UtcNow);
 
     /// <summary>
     /// Request the list of users currently in a room.
     /// </summary>
-    /// <param name="roomName">Target room name.</param>
+    /// <param name="roomId">Target room name.</param>
     /// <returns>List of connection IDs in that room.</returns>
-    public Task<List<string>> GetGroupMembers(string roomName)
+    public Task<List<string>> GetGroupMembers(string roomId)
     {
-        _groupMembers.TryGetValue(roomName, out var members);
+        _groupMembers.TryGetValue(roomId, out var members);
         return Task.FromResult(members ?? new List<string>());
     }
 
     /// <summary>
     /// Edit a previously sent message.
     /// </summary>
-    /// <param name="roomName">Room where the message resides.</param>
+    /// <param name="roomId">Room where the message resides.</param>
     /// <param name="messageId">Identifier of the message.</param>
-    /// <param name="newText">New text for the message.</param>
-    public async Task EditMessage(string roomName, string messageId, string newText)
+    /// <param name="newMessage">New text for the message.</param>
+    public async Task EditMessage(string roomId, string messageId, string newMessage)
     {
         // Update in database first...
-        await Clients.Group(roomName)
-                     .SendAsync("MessageEdited", roomName, messageId, newText, DateTime.UtcNow);
+        await Clients.Group(roomId)
+                     .SendAsync("MessageEdited", roomId, messageId, newMessage, DateTime.UtcNow);
     }
 
     /// <summary>
     /// Delete a message in a room.
     /// </summary>
-    /// <param name="roomName">Room where the message resides.</param>
+    /// <param name="roomId">Room where the message resides.</param>
+    /// <param name="userId">Which user deleted the message (the sender of the message, an admin, ...). </param>
     /// <param name="messageId">Identifier of the message.</param>
-    public async Task DeleteMessage(string roomName, string messageId)
+    public async Task MarkAsDeleted(string roomId,string userId, string messageId)
     {
         // Remove from database first...
-        await Clients.Group(roomName)
-                     .SendAsync("MessageDeleted", roomName, messageId);
+        await Clients.Group(roomId)
+                     .SendAsync("DeletedReceipt", roomId, messageId);
     }
 }

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Core.Interfaces;
+using Core.Interfaces.Services;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Api.Chat.Hubs;

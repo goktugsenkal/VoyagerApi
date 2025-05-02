@@ -28,6 +28,7 @@ public interface IChatRepository
     Task<Message?> GetMessageByIdAsync(Guid messageId);
     Task<List<Message>> GetMessagesAsync(Guid roomId, DateTime? before, int limit);
     Task AddMessageAsync(Message message);
+    Task<Message?> GetLastMessageForARoomAsync(Guid roomId);
 
     // Read Receipt
     Task<bool> HasReadReceiptAsync(Guid messageId, Guid userId);

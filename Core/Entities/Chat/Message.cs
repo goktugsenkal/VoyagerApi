@@ -1,3 +1,5 @@
+using Core.Dtos.Chat;
+
 namespace Core.Entities.Chat;
 
 /// <summary>
@@ -10,7 +12,7 @@ public class Message : UpdatableBaseEntity
     /// <summary>
     /// Client-generated UUID for deduplication and sync.
     /// </summary>
-    public string ClientMessageId { get; set; }
+    public Guid ClientMessageId { get; set; }
 
     public Guid ChatRoomId { get; set; }
     public ChatRoom ChatRoom { get; set; }
@@ -21,7 +23,7 @@ public class Message : UpdatableBaseEntity
     /// <summary>
     /// Only textual content is supported; remove format/enums if not needed
     /// </summary>
-    public string? Text { get; set; }
+    public string Text { get; set; } = string.Empty;
 
     /// <summary>
     /// Navigation property for MessageReadReceipt
@@ -37,4 +39,19 @@ public class Message : UpdatableBaseEntity
     /// Optional reference to a voyage if the message mentions one
     /// </summary>
     public Guid? VoyageId { get; set; }
+}
+
+public static class MessageExtensions
+{
+    public static MessageDto ToDto(this Message message)
+    {
+        return new MessageDto
+        {
+            ServerId = message.Id,
+            TimeStamp = message.CreatedAt,
+            UserId = message.SenderId,
+            Text = message.Text,
+            ContainsVoyage = message.VoyageId.HasValue
+        };
+    }
 }

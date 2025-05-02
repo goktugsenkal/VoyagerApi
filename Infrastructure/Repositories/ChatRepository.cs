@@ -20,6 +20,7 @@ public class ChatRepository(DataContext context) : IChatRepository
 
     public async Task AddChatUserAsync(ChatUser user)
     {
+        user.CreatedAt = DateTime.UtcNow;
         await context.ChatUsers.AddAsync(user);
         await SaveChangesAsync();
     }
@@ -100,6 +101,14 @@ public class ChatRepository(DataContext context) : IChatRepository
         message.CreatedAt = DateTime.UtcNow;
         await context.ChatMessages.AddAsync(message);
         await SaveChangesAsync();
+    }
+
+    public async Task<Message?> GetLastMessageForARoomAsync(Guid roomId)
+    {
+        return await context.ChatMessages
+            .Where(m => m.ChatRoomId == roomId)
+            .OrderByDescending(m => m.CreatedAt)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<bool> HasReadReceiptAsync(Guid messageId, Guid userId)

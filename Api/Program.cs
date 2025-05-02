@@ -7,6 +7,7 @@ using Core.Constants;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Interfaces.Repositories;
+using Core.Interfaces.Services;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
@@ -37,7 +38,7 @@ try
     // Add services to the container.
     builder.Services.AddControllers();
     builder.Services.AddDbContext<DataContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+        options.UseNpgsql(builder.Configuration.GetSection("ConnectionStrings:DefaultConnection").Value));
 
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(c =>
@@ -124,6 +125,7 @@ try
     builder.Services.AddScoped<ISearchRepository, SearchRepository>();
     builder.Services.AddScoped<ISearchService, SearchService>();
     
+    builder.Services.AddScoped<IChatRepository, ChatRepository>();
     builder.Services.AddScoped<IChatService, ChatService>();
     builder.Services.AddSignalR();
 

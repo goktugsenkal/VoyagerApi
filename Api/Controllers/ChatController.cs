@@ -12,7 +12,7 @@ public class ChatController(IChatService chatService) : BaseApiController
 {
     [Authorize]
     [HttpPost("signup")]
-    public async Task<IActionResult> SignUpForChat()
+    public async Task<IActionResult> SignUpForChat(SignUpForChatModel model)
     {
         var userId = GetUserIdFromTokenClaims();
         if (userId is null)
@@ -20,12 +20,16 @@ public class ChatController(IChatService chatService) : BaseApiController
 
         try
         {
-            await chatService.SignUpForChatAsync(userId.Value); // value is checked for null
+            await chatService.SignUpForChatAsync(userId.Value, model); // userId value is checked for null
             return Ok(new { message = "Chat registration successful." });
         }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { error = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
         }
     }
     [HttpPost("rooms")]
@@ -60,5 +64,33 @@ public class ChatController(IChatService chatService) : BaseApiController
     {
         if (!AllowedMediaTypes.Contains(mediaType.ToLower()))
             throw new InvalidOperationException($"Unsupported media type: {mediaType}");
+    }
+
+    [Authorize]
+    [HttpPost("rooms/{roomId}/participants")]
+    public async Task<IActionResult> AddChatRoomParticipants(string roomId, List<CreateChatRoomParticipantModel> models)
+    {
+        var userId = GetUserIdFromTokenClaims();
+        if (userId == null)
+            return Unauthorized("User ID not found in token claims.");
+
+        if (!Guid.TryParse(roomId, out var roomGuid))
+            return BadRequest("Invalid room ID format.");
+
+        if (models.Count == 0)
+            return BadRequest("No participants provided.");
+
+        try
+        {
+            foreach (var model in models)
+            {
+                await chatService.AddChatRoomParticipantAsync(roomGuid, model);
+            }
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 }

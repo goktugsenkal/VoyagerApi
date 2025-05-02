@@ -127,6 +127,7 @@ try
     
     builder.Services.AddScoped<IChatRepository, ChatRepository>();
     builder.Services.AddScoped<IChatService, ChatService>();
+    builder.Services.AddScoped<IMessageRepository, MessageRepository>();
     builder.Services.AddSignalR();
 
     // builder.WebHost.ConfigureKestrel((opt) =>

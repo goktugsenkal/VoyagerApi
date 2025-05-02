@@ -7,6 +7,7 @@ public class ChatUser : UpdatableBaseEntity
     public string? StatusMessage { get; set; }
     public DateTime LastSeen { get; set; }
     public bool ShowLastSeen { get; set; }
+    public bool ShowOnline { get; set; }
     
     public VoyagerUser User { get; set; }
 }

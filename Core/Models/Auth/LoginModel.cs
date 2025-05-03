@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace Core.Models;
 
 public class LoginModel

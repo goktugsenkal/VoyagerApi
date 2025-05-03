@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Core.Interfaces;
+using Core.Interfaces.Services;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Api.Chat.Hubs;
@@ -91,19 +92,27 @@ public class ChatHub(IChatService chatService) : Hub
     /// <param name="voyageId">If the message contains a voyage, its ID will be included</param>
     public async Task SendMessage(string roomId, string userId, string messageId, string message, string? voyageId = null)
     {
-        // if voyageId is not null, then the message contains a voyage
+        var parsedMessageId = Guid.Parse(messageId);
+        var parsedRoomId = Guid.Parse(roomId);
+        var parsedUserId = Guid.Parse(userId);
+        var timestamp = DateTime.UtcNow;
+
         if (voyageId is not null)
         {
-            // send message with voyageId
-            await Clients.Group(roomId)
-                .SendAsync("MessageReceived", roomId, userId, messageId, message, DateTime.UtcNow, voyageId);
+            await Clients.OthersInGroup(roomId)
+                .SendAsync("MessageReceived", roomId, userId, messageId, message, timestamp, voyageId);
+
+            await chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedUserId, message, Guid.Parse(voyageId));
+            
+            await chatService.MarkMessageAsDeliveredAsync(parsedMessageId, parsedUserId);
+            // await Clients.Client(userId).SendAsync("MessageDelivered", voyageId);
         }
-        // if voyageId is null, then the message does not contain a voyage
         else
         {
-            // send message
-            await Clients.Group(roomId)
-                .SendAsync("MessageReceived", roomId, userId, messageId, message, DateTime.UtcNow);
+            await Clients.OthersInGroup(roomId)
+                .SendAsync("MessageReceived", roomId, userId, messageId, message, timestamp);
+
+            await chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedUserId, message);
         }
     }
 
@@ -113,18 +122,21 @@ public class ChatHub(IChatService chatService) : Hub
     /// <param name="roomId">Room where typing is happening.</param>
     /// <param name="userId">User who is typing.</param>
     public async Task StartTyping(string roomId, string userId)
-        => await Clients.Group(roomId)
-                        .SendAsync("UserTyping", roomId, userId);
-    
+    {
+        await Clients.Group(roomId)
+            .SendAsync("UserTyping", roomId, userId);
+    }
+
     /// <summary>
     /// Notify others in the room that the caller is typing.
     /// </summary>
     /// <param name="roomId">Room where typing is happening.</param>
     /// <param name="userId">User who is typing.</param>
     public async Task StopTyping(string roomId, string userId)
-        => await Clients.Group(roomId)
-                        .SendAsync("UserStoppedTyping", roomId, userId);
-    
+    {
+        await Clients.Group(roomId)
+            .SendAsync("UserStoppedTyping", roomId, userId);
+    }
 
     /// <summary>
     /// Send a read receipt for a given message in a room.
@@ -133,8 +145,15 @@ public class ChatHub(IChatService chatService) : Hub
     /// <param name="messageId">Identifier of the message.</param>
     /// <param name="userId">User who read it. Good for group chats.</param>
     public async Task MarkAsRead(string roomId, string messageId, string userId)
-        => await Clients.Group(roomId)
-                        .SendAsync("ReadReceipt", roomId, messageId, userId, DateTime.UtcNow);
+    {
+        var parsedMessageId = Guid.Parse(messageId);
+        var parsedRoomId = Guid.Parse(roomId);
+        
+        await Clients.Group(roomId)
+            .SendAsync("ReadReceipt", roomId, messageId, userId, DateTime.UtcNow);
+        
+        await chatService.MarkMessageAsReadAsync(parsedMessageId, parsedRoomId);
+    }
 
     /// <summary>
     /// Request the list of users currently in a room.
@@ -168,7 +187,10 @@ public class ChatHub(IChatService chatService) : Hub
     /// <param name="messageId">Identifier of the message.</param>
     public async Task MarkAsDeleted(string roomId,string userId, string messageId)
     {
-        // Remove from database first...
+        var parsedMessageId = Guid.Parse(messageId);
+        
+        await chatService.DeleteMessageAsync(parsedMessageId);
+        
         await Clients.Group(roomId)
                      .SendAsync("DeletedReceipt", roomId, messageId);
     }

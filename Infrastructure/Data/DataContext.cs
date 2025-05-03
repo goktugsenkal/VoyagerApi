@@ -6,6 +6,7 @@ namespace Infrastructure.Data;
 public class DataContext(DbContextOptions<DataContext> options) : DbContext(options)
 {
     public DbSet<VoyagerUser> Users { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<Voyage> Voyages { get; set; }
     public DbSet<Stop> Stops { get; set; }
     public DbSet<Like> Likes { get; set; }

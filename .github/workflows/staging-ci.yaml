@@ -50,7 +50,7 @@ jobs:
 
             cd /home/ec2-user/repos/VoyagerApi
 
-            echo '📥 Pulling staging branch...'
+            echo 'Pulling staging branch...'
             git fetch origin
             git reset --hard origin/staging
 
@@ -58,24 +58,24 @@ jobs:
             TMP_CONFIG_DIR=/tmp/voyager-config-backup
             mkdir -p \$TMP_CONFIG_DIR
 
-            echo '📦 Validating config files...'
+            echo 'Validating config files...'
             if [ ! -f \$CONFIG_DIR/staging.json ]; then echo '❌ staging.json missing'; exit 1; fi
 
             cp \$CONFIG_DIR/staging.json \$TMP_CONFIG_DIR/staging.json
 
             export DOTNET_GCHeapHardLimit=773741824
 
-            echo '⚙️ Publishing STAGING build...'
-            dotnet publish Api/Api.csproj -c Release -p:PublishReadyToRun=false -o /var/www/voyager
+            echo 'Publishing STAGING build...'
+            dotnet publish Api/Api.csproj -c Release -p:PublishReadyToRun=false -o /var/www/voyager-staging
 
             echo '🧬 Restoring STAGING configs...'
-            cp \$TMP_CONFIG_DIR/staging.json /var/www/voyager/appsettings.json
+            cp \$TMP_CONFIG_DIR/staging.json /var/www/voyager-staging/appsettings.json
             cp \$TMP_CONFIG_DIR/staging.json Api/appsettings.json
 
-            echo '📂 Running EF migrations for STAGING...'
+            echo 'Running EF migrations for STAGING...'
             ASPNETCORE_ENVIRONMENT=Staging dotnet ef database update -s Api/ -p Infrastructure/ --no-build
 
-            echo '🚀 Restarting STAGING service...'
-            sudo systemctl restart voyager-staging.service  # 👈 Make sure you use the correct service name
+            echo 'Restarting STAGING service...'
+            sudo systemctl restart voyager-staging.service
           "
 

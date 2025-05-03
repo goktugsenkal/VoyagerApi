@@ -2,5 +2,5 @@ namespace Core.Constants;
 
 public static class VersionInfo
 {
-    public const string ApiVersion = "Production: 0.4.004";
+    public const string ApiVersion = "Staging: 0.4.110";
 }

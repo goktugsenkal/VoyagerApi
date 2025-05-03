@@ -8,10 +8,10 @@ public class VoyagerUser : UpdatableBaseEntity
     public string LastName { get; set; } = string.Empty;
     public string DisplayName => $"{FirstName} {LastName}".Trim();
     public string Bio { get; set; } = string.Empty;
-    public string Location { get; set; } = string.Empty; //
-    
-    public string ProfilePictureUrl { get; set; } = string.Empty; //
-    public string BannerPictureUrl { get; set; } = string.Empty; //
+    public string Location { get; set; } = string.Empty;
+
+    public string ProfilePictureUrl { get; set; } = "default/profile.png";
+    public string BannerPictureUrl { get; set; } = "default/banner.png";
 
     public int FollowerCount { get; set; }
     public int FollowingCount { get; set; }
@@ -34,8 +34,10 @@ public class VoyagerUser : UpdatableBaseEntity
     public bool LockoutEnabled { get; set; }
     public DateTime? LockoutEnd { get; set; }
     
-    public string? RefreshToken { get; set; }
-    public DateTime? RefreshTokenExpiryTime { get; set; }
+    // public string? RefreshToken { get; set; }
+    // public DateTime? RefreshTokenExpiryTime { get; set; }
+    
+    public List<RefreshToken> RefreshTokens { get; set; }
 
     public ICollection<Voyage> Voyages { get; set; }
 }

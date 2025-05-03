@@ -3,6 +3,7 @@ using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
@@ -45,9 +46,13 @@ namespace Api.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<TokenResponseDto>> Login(LoginModel request)
         {
+            // get the ip and pass it down
+            var ip = HttpContext.Features.Get<IHttpConnectionFeature>()?.RemoteIpAddress?.ToString()
+                     ?? HttpContext.Connection.RemoteIpAddress?.ToString()
+                     ?? "unknown";
             try
             {
-                var result = await authService.LoginAsync(request);
+                var result = await authService.LoginAsync(request, ip);
                 if (result is null)
                     return BadRequest("Invalid username or password.");
 
@@ -62,7 +67,12 @@ namespace Api.Controllers
         [HttpPost("refresh-token")]
         public async Task<ActionResult<TokenResponseDto>> RefreshToken(RefreshTokenRequestModel request)
         {
-            var result = await authService.RefreshTokensAsync(request);
+            // get the ip and pass it down
+            var ip = HttpContext.Features.Get<IHttpConnectionFeature>()?.RemoteIpAddress?.ToString()
+                     ?? HttpContext.Connection.RemoteIpAddress?.ToString()
+                     ?? "unknown";
+            
+            var result = await authService.RefreshTokensAsync(request, ip);
             if (result?.AccessToken is null)
                 return Unauthorized("Invalid refresh token.");
 

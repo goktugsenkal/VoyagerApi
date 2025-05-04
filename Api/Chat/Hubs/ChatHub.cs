@@ -1,11 +1,12 @@
 using System.Security.Claims;
 using Core.Interfaces;
 using Core.Interfaces.Services;
+using Infrastructure.Services.Data;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Api.Chat.Hubs;
 
-public class ChatHub(IChatService chatService) : Hub
+public class ChatHub(IChatService chatService, RedisPresenceService redisPresenceService) : Hub
 {
     // In-memory store for demo purposes only.
     // In production, back this with a database or distributed cache.
@@ -20,7 +21,8 @@ public class ChatHub(IChatService chatService) : Hub
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value 
                      ?? Context.ConnectionId;
         
-        // figure out what the fuck rooms and groups are
+        if (Guid.TryParse(userId, out var guid))
+            await redisPresenceService.AddOnlineUserAsync(guid);
             
         // Notify everyone that this user came online
         await Clients.Others.SendAsync("UserOnline", userId);
@@ -38,12 +40,8 @@ public class ChatHub(IChatService chatService) : Hub
         // Notify everyone that this user went offline
         await Clients.Others.SendAsync("UserOffline", userId);
 
-        // Clean up from any groups they were in
-        foreach (var kvp in _groupMembers)
-        {
-            if (kvp.Value.Contains(Context.ConnectionId))
-                kvp.Value.Remove(Context.ConnectionId);
-        }
+        if (Guid.TryParse(userId, out var guid))
+            await redisPresenceService.RemoveOnlineUserAsync(guid);
 
         await base.OnDisconnectedAsync(exception);
     }
@@ -113,6 +111,9 @@ public class ChatHub(IChatService chatService) : Hub
                 .SendAsync("MessageReceived", roomId, userId, messageId, message, timestamp);
 
             await chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedUserId, message);
+            
+            await chatService.MarkMessageAsDeliveredAsync(parsedMessageId, parsedUserId);
+            // await Clients.Client(userId).SendAsync("MessageDelivered", voyageId);
         }
     }
 

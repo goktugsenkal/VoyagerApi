@@ -101,8 +101,12 @@ public class ChatService(IChatRepository chatRepository,
         foreach (var room in pagedRooms.Items)
         {
             var dto = room.ToDto();
+            
             var lastMsg = await chatRepository.GetLastMessageForARoomAsync(room.Id);
             dto.LastMessage = lastMsg?.ToDto();
+            
+            dto.ParticipantIds = await chatRepository.GetParticipantIdsForRoomAsync(room.Id);
+            
             roomDtos.Add(dto);
         }
 
@@ -168,6 +172,13 @@ public class ChatService(IChatRepository chatRepository,
         
         var participant = participantModel.ToEntity(roomId);
         await chatRepository.AddParticipantAsync(participant);
+        
+        var chatRoom = await chatRepository.GetChatRoomByIdAsync(roomId);
+        if (chatRoom is not null &&  chatRoom.Participants.Count >= 2)
+        {
+            chatRoom.Type = ChatRoomType.Group;
+        }
+        
         await chatRepository.SaveChangesAsync();
     }
 

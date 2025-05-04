@@ -93,4 +93,15 @@ public class ChatController(IChatService chatService) : BaseApiController
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    [HttpGet("/peers/online")]
+    public async Task<IActionResult> GetOnlinePeers()
+    {
+        var userId = GetUserIdFromTokenClaims();
+        if (userId == null)
+            return Unauthorized("User ID not found in token claims.");
+        
+        var result = await chatService.GetOnlinePeersAsyncForUserAsync(userId.Value);
+        return Ok(result);
+    }
 }

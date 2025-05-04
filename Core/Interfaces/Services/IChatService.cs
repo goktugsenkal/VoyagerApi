@@ -9,8 +9,11 @@ namespace Core.Interfaces.Services;
 public interface IChatService
 {
     Task SignUpForChatAsync(Guid userId, SignUpForChatModel model);
+    Task<bool> IsUserSignedUpForChatAsync(Guid userId);
     Task<CreateChatRoomResult> CreateChatRoomAsync(CreateChatRoomModel roomModel);
     Task<PagedList<ChatRoomDto>> GetChatRoomsForUserAsync(Guid userId, int pageNumber, int pageSize);
+    Task<List<Guid>> GetChatRoomIdsForUserAsync(Guid userId);
+    Task<List<Guid>> GetOnlinePeersAsyncForUserAsync(Guid userId);
     Task AddChatRoomParticipantAsync(Guid roomId, CreateChatRoomParticipantModel participantModel);
     
     // chat hub methods

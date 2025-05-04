@@ -14,12 +14,14 @@ public interface IChatRepository
     // ChatRoom
     Task<ChatRoom?> GetChatRoomByIdAsync(Guid roomId);
     Task<PagedList<ChatRoom>> GetChatRoomsForUserAsync(Guid userId, int pageNumber, int pageSize);
+    Task<List<Guid>> GetChatRoomIdsForUserAsync(Guid userId);
     Task AddChatRoomAsync(ChatRoom room);
     Task UpdateChatRoomAsync(ChatRoom room);
     Task DeleteChatRoomAsync(ChatRoom room);
 
     // ChatRoomParticipant
     Task<ChatRoomParticipant?> GetParticipantAsync(Guid roomId, Guid userId);
+    Task<List<Guid>> GetParticipantIdsForRoomAsync(Guid roomId);
     Task<List<ChatRoomParticipant>> GetParticipantsAsync(Guid roomId);
     Task AddParticipantAsync(ChatRoomParticipant participant);
     Task RemoveParticipantAsync(ChatRoomParticipant participant);

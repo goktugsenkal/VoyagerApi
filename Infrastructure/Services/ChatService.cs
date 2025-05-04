@@ -1,18 +1,21 @@
 using Core.Dtos.Chat;
 using Core.Entities.Chat;
 using Core.Interfaces;
+using Core.Interfaces.Data;
 using Core.Interfaces.Repositories;
 using Core.Interfaces.Services;
 using Core.Models;
 using Core.Models.Chat;
 using Core.Results;
+using StackExchange.Redis;
 
 namespace Infrastructure.Services;
 
 public class ChatService(IChatRepository chatRepository, 
     IS3Service s3Service, 
     IMessageRepository messageRepository,
-    IUserRepository userRepository) : IChatService
+    IUserRepository userRepository, 
+    IRedisService redisService) : IChatService
 {
     public async Task SignUpForChatAsync(Guid userId, SignUpForChatModel model)
     {
@@ -37,7 +40,12 @@ public class ChatService(IChatRepository chatRepository,
         await chatRepository.AddChatUserAsync(chatUser);
         await chatRepository.SaveChangesAsync();
     }
-    
+
+    public async Task<bool> IsUserSignedUpForChatAsync(Guid userId)
+    {
+        return await chatRepository.ChatUserExistsAsync(userId);
+    }
+
     public async Task<CreateChatRoomResult> CreateChatRoomAsync(CreateChatRoomModel roomModel)
     {
         // map the CreateChatRoomModel to a ChatRoom
@@ -106,7 +114,51 @@ public class ChatService(IChatRepository chatRepository,
             pagedRooms.PageSize
         );
     }
-    
+
+    public async Task<List<Guid>> GetChatRoomIdsForUserAsync(Guid userId)
+    {
+        var cached = await redisService.GetCachedChatRoomIdsAsync(userId);
+        if (cached.Count > 0) return cached;
+
+        var roomIds = await chatRepository.GetChatRoomIdsForUserAsync(userId);
+
+        await redisService.CacheChatRoomIdsAsync(userId, roomIds);
+        return roomIds;
+    }
+
+    public async Task<List<Guid>> GetOnlinePeersAsyncForUserAsync(Guid userId)
+    {
+        // 1) get all room IDs (cached + DB fallback)
+        var roomIds = await GetChatRoomIdsForUserAsync(userId);
+        if (!roomIds.Any())
+            return new List<Guid>();
+
+        // 2) grab the entire set of online users in one go
+        var onlineSet = new HashSet<Guid>(await redisService.GetAllOnlineUsersAsync());
+
+        var peers = new HashSet<Guid>();
+        foreach (var roomId in roomIds)
+        {
+            // 3) fetch participants for that room
+            var participants = await chatRepository.GetParticipantIdsForRoomAsync(roomId);
+
+            // 4) only consider 1:1 rooms
+            if (participants.Count == 2)
+            {
+                // the “peer” is the one that isn’t `userId`
+                var peerId = participants[0] == userId 
+                    ? participants[1] 
+                    : participants[0];
+
+                // 5) if they’re online, add to result
+                if (onlineSet.Contains(peerId))
+                    peers.Add(peerId);
+            }
+        }
+
+        return peers.ToList();
+    }
+
     public async Task AddChatRoomParticipantAsync(Guid roomId, CreateChatRoomParticipantModel participantModel)
     {
         if (!await chatRepository.ChatUserExistsAsync(participantModel.UserId))

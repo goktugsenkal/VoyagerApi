@@ -11,6 +11,7 @@ using Core.Interfaces.Services;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
+using Infrastructure.Services.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
@@ -19,6 +20,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NLog;
 using NLog.Web;
+using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
@@ -39,6 +41,11 @@ try
     builder.Services.AddControllers();
     builder.Services.AddDbContext<DataContext>(options =>
         options.UseNpgsql(builder.Configuration.GetSection("ConnectionStrings:DefaultConnection").Value));
+    
+    builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+        ConnectionMultiplexer.Connect(builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379"));
+
+    builder.Services.AddSingleton<RedisPresenceService>();
 
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(c =>

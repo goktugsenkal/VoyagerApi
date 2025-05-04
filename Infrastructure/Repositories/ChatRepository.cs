@@ -45,6 +45,14 @@ public class ChatRepository(DataContext context) : IChatRepository
         return PagedList<ChatRoom>.CreatePagedList(query, pageNumber, pageSize);
     }
 
+    public async Task<List<Guid>> GetChatRoomIdsForUserAsync(Guid userId)
+    {
+        return await context.ChatRoomParticipants
+            .Where(p => p.UserId == userId)
+            .Select(p => p.ChatRoomId)
+            .ToListAsync();
+    }
+
     public async Task AddChatRoomAsync(ChatRoom room)
     {
         room.CreatedAt = DateTime.UtcNow;
@@ -67,6 +75,12 @@ public class ChatRepository(DataContext context) : IChatRepository
        return await context.ChatRoomParticipants
            .FirstOrDefaultAsync(p => p.ChatRoomId == roomId && p.UserId == userId); 
     }
+
+    public Task<List<Guid>> GetParticipantIdsForRoomAsync(Guid roomId)
+        => context.ChatRoomParticipants
+            .Where(p => p.ChatRoomId == roomId)
+            .Select(p => p.UserId)
+            .ToListAsync();
 
     public async Task<List<ChatRoomParticipant>> GetParticipantsAsync(Guid roomId)
     {

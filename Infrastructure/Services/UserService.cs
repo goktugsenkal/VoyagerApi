@@ -2,6 +2,7 @@ using Core.Dtos;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Interfaces.Repositories;
+using Core.Interfaces.Services;
 using Core.Models;
 
 namespace Infrastructure.Services;
@@ -11,6 +12,7 @@ public class UserService(
     IUserRepository userRepository,
     ILikeRepository likeRepository,
     IUserChangeLogRepository logRepository, 
+    IChatService chatService,
     IS3Service s3Service) : IUserService
 {
     public async Task<string?> GetUsernameByIdAsync(Guid id)
@@ -65,6 +67,8 @@ public class UserService(
 
         if (!string.IsNullOrWhiteSpace(user.BannerPictureUrl))
             userDto.BannerPictureUrl = s3Service.GeneratePreSignedDownloadUrl(user.BannerPictureUrl, TimeSpan.FromMinutes(15));
+        
+        userDto.ChatEnabled = await chatService.IsUserSignedUpForChatAsync(id);
 
         return userDto;
     }

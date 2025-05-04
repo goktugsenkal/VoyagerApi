@@ -1,32 +1,44 @@
 using System.Security.Claims;
 using Core.Interfaces;
+using Core.Interfaces.Data;
 using Core.Interfaces.Services;
 using Infrastructure.Services.Data;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Api.Chat.Hubs;
 
-public class ChatHub(IChatService chatService, RedisPresenceService redisPresenceService) : Hub
+public class ChatHub(IChatService chatService, IRedisService redisService) : Hub
 {
-    // In-memory store for demo purposes only.
-    // In production, back this with a database or distributed cache.
-    private static readonly Dictionary<string, List<string>> _groupMembers = new();
+    // // In-memory store for demo purposes only.
+    // // In production, back this with a database or distributed cache.
+    // private static readonly Dictionary<string, List<string>> _groupMembers = new();
 
     /// <summary>
     /// Called when a new client connects. Broadcasts presence to all users.
     /// </summary>
     public override async Task OnConnectedAsync()
     {
-        // Get user ID
-        var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                     ?? Context.ConnectionId;
-        
-        if (Guid.TryParse(userId, out var guid))
-            await redisPresenceService.AddOnlineUserAsync(guid);
-            
-        // Notify everyone that this user came online
+        // Extract user ID from JWT claims
+        var userIdStr = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdStr, out var userId))
+        {
+            Context.Abort();
+            return;
+        }
+
+        // Add to Redis presence
+        await redisService.AddOnlineUserAsync(userId);
+
+        // Automatically join all chat rooms user is a member of
+        var chatRoomIds = await chatService.GetChatRoomIdsForUserAsync(userId);
+        foreach (var roomId in chatRoomIds)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
+        }
+
+        // Notify others user is online
         await Clients.Others.SendAsync("UserOnline", userId);
-        
+
         await base.OnConnectedAsync();
     }
 
@@ -41,7 +53,7 @@ public class ChatHub(IChatService chatService, RedisPresenceService redisPresenc
         await Clients.Others.SendAsync("UserOffline", userId);
 
         if (Guid.TryParse(userId, out var guid))
-            await redisPresenceService.RemoveOnlineUserAsync(guid);
+            await redisService.RemoveOnlineUserAsync(guid);
 
         await base.OnDisconnectedAsync(exception);
     }
@@ -56,10 +68,10 @@ public class ChatHub(IChatService chatService, RedisPresenceService redisPresenc
         // Join the group
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
 
-        // Track membership
-        if (!_groupMembers.ContainsKey(roomId))
-            _groupMembers[roomId] = new List<string>();
-        _groupMembers[roomId].Add(Context.ConnectionId);
+        // // Track membership
+        // if (!_groupMembers.ContainsKey(roomId))
+        //     _groupMembers[roomId] = new List<string>();
+        // _groupMembers[roomId].Add(Context.ConnectionId);
 
         // Notify others in the room
         await Clients.Group(roomId).SendAsync("UserJoined", roomId, Context.ConnectionId);
@@ -74,8 +86,8 @@ public class ChatHub(IChatService chatService, RedisPresenceService redisPresenc
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
 
-        if (_groupMembers.ContainsKey(roomId))
-            _groupMembers[roomId].Remove(Context.ConnectionId);
+        // if (_groupMembers.ContainsKey(roomId))
+        //     _groupMembers[roomId].Remove(Context.ConnectionId);
 
         await Clients.Group(roomId).SendAsync("UserLeft", roomId, Context.ConnectionId);
     }
@@ -163,8 +175,9 @@ public class ChatHub(IChatService chatService, RedisPresenceService redisPresenc
     /// <returns>List of connection IDs in that room.</returns>
     public Task<List<string>> GetGroupMembers(string roomId)
     {
-        _groupMembers.TryGetValue(roomId, out var members);
-        return Task.FromResult(members ?? new List<string>());
+        // _groupMembers.TryGetValue(roomId, out var members);
+        // return Task.FromResult(members ?? new List<string>());
+        throw new NotImplementedException();
     }
 
     /// <summary>

@@ -21,13 +21,13 @@ namespace Infrastructure.Migrations
                 oldType: "text",
                 oldNullable: true);
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "ClientMessageId",
-                table: "ChatMessages",
-                type: "uuid",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql(
+                $"""
+                     ALTER TABLE "ChatMessages"
+                     ALTER COLUMN "ClientMessageId"
+                     TYPE uuid
+                     USING "ClientMessageId"::uuid;
+                """);
         }
 
         /// <inheritdoc />
@@ -41,13 +41,13 @@ namespace Infrastructure.Migrations
                 oldClrType: typeof(string),
                 oldType: "text");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ClientMessageId",
-                table: "ChatMessages",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(Guid),
-                oldType: "uuid");
+            // Revert ClientMessageId from uuid → text
+            migrationBuilder.Sql($"""
+                                    ALTER TABLE "ChatMessages"
+                                    ALTER COLUMN "ClientMessageId"
+                                    TYPE text
+                                    USING "ClientMessageId"::text;
+                                  """);
         }
     }
 }

@@ -45,7 +45,7 @@ public class RedisService(IConnectionMultiplexer multiplexer) : IRedisService
         return _db.StringSetAsync(
             ChatRoomsKey(userId), 
             payload, 
-            expiry: ttl ?? TimeSpan.FromMinutes(10));
+            expiry: ttl ?? TimeSpan.FromMinutes(60));
     }
 
     public Task InvalidateChatRoomCacheAsync(Guid userId) 

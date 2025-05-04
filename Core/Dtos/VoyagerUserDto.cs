@@ -16,6 +16,7 @@ public class VoyagerUserDto
     public int CompletedPlanCount { get; set; }
     public int LikeCount { get; set; }
     public int InspiredCount { get; set; }
+    public bool ChatEnabled { get; set; }
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public bool EmailConfirmed { get; set; }

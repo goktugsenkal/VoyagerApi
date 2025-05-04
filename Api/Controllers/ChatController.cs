@@ -54,11 +54,20 @@ public class ChatController(IChatService chatService) : BaseApiController
             throw;
         }
     }
-
-    private static readonly HashSet<string> AllowedMediaTypes = new()
+    
+    [Authorize]
+    [HttpGet("rooms")]
+    public async Task<IActionResult> GetChatRooms()
     {
-        "mp4", "jpg", "jpeg", "png", "gif"
-    };
+        var userId = GetUserIdFromTokenClaims();
+        if (userId == null)
+            return Unauthorized("User ID not found in token claims.");
+        
+        var result = await chatService.GetChatRoomsForUserAsync(userId.Value, 1, int.MaxValue);
+        return Ok(result);
+    }
+
+    private static readonly HashSet<string> AllowedMediaTypes = ["mp4", "jpg", "jpeg", "png", "gif"];
 
     private void ValidateMediaTypes(string mediaType)
     {

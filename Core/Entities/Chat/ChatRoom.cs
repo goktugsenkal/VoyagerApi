@@ -59,7 +59,7 @@ public static class ChatRoomTypeExtensions
             CreatedAt   = room.CreatedAt,
             Title       = room.Title,
             Description = room.Description,
-            Type        = room.Type.ToString(),
+            IsGroup        = room.Type != ChatRoomType.Private
             // last message will be added later
         };
     }

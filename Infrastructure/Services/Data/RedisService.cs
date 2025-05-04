@@ -29,7 +29,7 @@ public class RedisService(IConnectionMultiplexer multiplexer) : IRedisService
 
     // chat-room caching
     private static string ChatRoomsKey(Guid userId) 
-        => $"chatrooms:{userId}";
+        => $"chat-rooms:{userId}";
 
     public async Task<List<Guid>> GetCachedChatRoomIdsAsync(Guid userId)
     {

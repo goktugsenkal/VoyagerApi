@@ -6,6 +6,7 @@ using Api.Misc;
 using Core.Constants;
 using Core.Entities;
 using Core.Interfaces;
+using Core.Interfaces.Data;
 using Core.Interfaces.Repositories;
 using Core.Interfaces.Services;
 using Infrastructure.Data;
@@ -45,7 +46,7 @@ try
     builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
         ConnectionMultiplexer.Connect(builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379"));
 
-    builder.Services.AddSingleton<RedisPresenceService>();
+    builder.Services.AddSingleton<IRedisService, RedisService>();
 
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(c =>

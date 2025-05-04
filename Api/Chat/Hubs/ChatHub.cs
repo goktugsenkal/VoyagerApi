@@ -1,29 +1,44 @@
 using System.Security.Claims;
 using Core.Interfaces;
+using Core.Interfaces.Data;
+using Core.Interfaces.Services;
+using Infrastructure.Services.Data;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Api.Chat.Hubs;
 
-public class ChatHub(IChatService chatService) : Hub
+public class ChatHub(IChatService chatService, IRedisService redisService) : Hub
 {
-    // In-memory store for demo purposes only.
-    // In production, back this with a database or distributed cache.
-    private static readonly Dictionary<string, List<string>> _groupMembers = new();
+    // // In-memory store for demo purposes only.
+    // // In production, back this with a database or distributed cache.
+    // private static readonly Dictionary<string, List<string>> _groupMembers = new();
 
     /// <summary>
     /// Called when a new client connects. Broadcasts presence to all users.
     /// </summary>
     public override async Task OnConnectedAsync()
     {
-        // Get user ID
-        var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                     ?? Context.ConnectionId;
-        
-        // figure out what the fuck rooms and groups are
-            
-        // Notify everyone that this user came online
+        // Extract user ID from JWT claims
+        var userIdStr = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdStr, out var userId))
+        {
+            Context.Abort();
+            return;
+        }
+
+        // Add to Redis presence
+        await redisService.AddOnlineUserAsync(userId);
+
+        // Automatically join all chat rooms user is a member of
+        var chatRoomIds = await chatService.GetChatRoomIdsForUserAsync(userId);
+        foreach (var roomId in chatRoomIds)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
+        }
+
+        // Notify others user is online
         await Clients.Others.SendAsync("UserOnline", userId);
-        
+
         await base.OnConnectedAsync();
     }
 
@@ -37,12 +52,8 @@ public class ChatHub(IChatService chatService) : Hub
         // Notify everyone that this user went offline
         await Clients.Others.SendAsync("UserOffline", userId);
 
-        // Clean up from any groups they were in
-        foreach (var kvp in _groupMembers)
-        {
-            if (kvp.Value.Contains(Context.ConnectionId))
-                kvp.Value.Remove(Context.ConnectionId);
-        }
+        if (Guid.TryParse(userId, out var guid))
+            await redisService.RemoveOnlineUserAsync(guid);
 
         await base.OnDisconnectedAsync(exception);
     }
@@ -57,10 +68,10 @@ public class ChatHub(IChatService chatService) : Hub
         // Join the group
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
 
-        // Track membership
-        if (!_groupMembers.ContainsKey(roomId))
-            _groupMembers[roomId] = new List<string>();
-        _groupMembers[roomId].Add(Context.ConnectionId);
+        // // Track membership
+        // if (!_groupMembers.ContainsKey(roomId))
+        //     _groupMembers[roomId] = new List<string>();
+        // _groupMembers[roomId].Add(Context.ConnectionId);
 
         // Notify others in the room
         await Clients.Group(roomId).SendAsync("UserJoined", roomId, Context.ConnectionId);
@@ -75,8 +86,8 @@ public class ChatHub(IChatService chatService) : Hub
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
 
-        if (_groupMembers.ContainsKey(roomId))
-            _groupMembers[roomId].Remove(Context.ConnectionId);
+        // if (_groupMembers.ContainsKey(roomId))
+        //     _groupMembers[roomId].Remove(Context.ConnectionId);
 
         await Clients.Group(roomId).SendAsync("UserLeft", roomId, Context.ConnectionId);
     }
@@ -91,19 +102,30 @@ public class ChatHub(IChatService chatService) : Hub
     /// <param name="voyageId">If the message contains a voyage, its ID will be included</param>
     public async Task SendMessage(string roomId, string userId, string messageId, string message, string? voyageId = null)
     {
-        // if voyageId is not null, then the message contains a voyage
+        var parsedMessageId = Guid.Parse(messageId);
+        var parsedRoomId = Guid.Parse(roomId);
+        var parsedUserId = Guid.Parse(userId);
+        var timestamp = DateTime.UtcNow;
+
         if (voyageId is not null)
         {
-            // send message with voyageId
-            await Clients.Group(roomId)
-                .SendAsync("MessageReceived", roomId, userId, messageId, message, DateTime.UtcNow, voyageId);
+            await Clients.OthersInGroup(roomId)
+                .SendAsync("MessageReceived", roomId, userId, messageId, message, timestamp, voyageId);
+
+            await chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedUserId, message, Guid.Parse(voyageId));
+            
+            await chatService.MarkMessageAsDeliveredAsync(parsedMessageId, parsedUserId);
+            // await Clients.Client(userId).SendAsync("MessageDelivered", voyageId);
         }
-        // if voyageId is null, then the message does not contain a voyage
         else
         {
-            // send message
-            await Clients.Group(roomId)
-                .SendAsync("MessageReceived", roomId, userId, messageId, message, DateTime.UtcNow);
+            await Clients.OthersInGroup(roomId)
+                .SendAsync("MessageReceived", roomId, userId, messageId, message, timestamp);
+
+            await chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedUserId, message);
+            
+            await chatService.MarkMessageAsDeliveredAsync(parsedMessageId, parsedUserId);
+            // await Clients.Client(userId).SendAsync("MessageDelivered", voyageId);
         }
     }
 
@@ -113,18 +135,21 @@ public class ChatHub(IChatService chatService) : Hub
     /// <param name="roomId">Room where typing is happening.</param>
     /// <param name="userId">User who is typing.</param>
     public async Task StartTyping(string roomId, string userId)
-        => await Clients.Group(roomId)
-                        .SendAsync("UserTyping", roomId, userId);
-    
+    {
+        await Clients.Group(roomId)
+            .SendAsync("UserTyping", roomId, userId);
+    }
+
     /// <summary>
     /// Notify others in the room that the caller is typing.
     /// </summary>
     /// <param name="roomId">Room where typing is happening.</param>
     /// <param name="userId">User who is typing.</param>
     public async Task StopTyping(string roomId, string userId)
-        => await Clients.Group(roomId)
-                        .SendAsync("UserStoppedTyping", roomId, userId);
-    
+    {
+        await Clients.Group(roomId)
+            .SendAsync("UserStoppedTyping", roomId, userId);
+    }
 
     /// <summary>
     /// Send a read receipt for a given message in a room.
@@ -133,8 +158,15 @@ public class ChatHub(IChatService chatService) : Hub
     /// <param name="messageId">Identifier of the message.</param>
     /// <param name="userId">User who read it. Good for group chats.</param>
     public async Task MarkAsRead(string roomId, string messageId, string userId)
-        => await Clients.Group(roomId)
-                        .SendAsync("ReadReceipt", roomId, messageId, userId, DateTime.UtcNow);
+    {
+        var parsedMessageId = Guid.Parse(messageId);
+        var parsedRoomId = Guid.Parse(roomId);
+        
+        await Clients.Group(roomId)
+            .SendAsync("ReadReceipt", roomId, messageId, userId, DateTime.UtcNow);
+        
+        await chatService.MarkMessageAsReadAsync(parsedMessageId, parsedRoomId);
+    }
 
     /// <summary>
     /// Request the list of users currently in a room.
@@ -143,8 +175,9 @@ public class ChatHub(IChatService chatService) : Hub
     /// <returns>List of connection IDs in that room.</returns>
     public Task<List<string>> GetGroupMembers(string roomId)
     {
-        _groupMembers.TryGetValue(roomId, out var members);
-        return Task.FromResult(members ?? new List<string>());
+        // _groupMembers.TryGetValue(roomId, out var members);
+        // return Task.FromResult(members ?? new List<string>());
+        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -168,7 +201,10 @@ public class ChatHub(IChatService chatService) : Hub
     /// <param name="messageId">Identifier of the message.</param>
     public async Task MarkAsDeleted(string roomId,string userId, string messageId)
     {
-        // Remove from database first...
+        var parsedMessageId = Guid.Parse(messageId);
+        
+        await chatService.DeleteMessageAsync(parsedMessageId);
+        
         await Clients.Group(roomId)
                      .SendAsync("DeletedReceipt", roomId, messageId);
     }

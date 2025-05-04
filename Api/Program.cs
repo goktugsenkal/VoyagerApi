@@ -6,10 +6,13 @@ using Api.Misc;
 using Core.Constants;
 using Core.Entities;
 using Core.Interfaces;
+using Core.Interfaces.Data;
 using Core.Interfaces.Repositories;
+using Core.Interfaces.Services;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
+using Infrastructure.Services.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
@@ -18,6 +21,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NLog;
 using NLog.Web;
+using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
@@ -37,7 +41,12 @@ try
     // Add services to the container.
     builder.Services.AddControllers();
     builder.Services.AddDbContext<DataContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+        options.UseNpgsql(builder.Configuration.GetSection("ConnectionStrings:DefaultConnection").Value));
+    
+    builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+        ConnectionMultiplexer.Connect(builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379"));
+
+    builder.Services.AddSingleton<IRedisService, RedisService>();
 
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(c =>
@@ -124,7 +133,9 @@ try
     builder.Services.AddScoped<ISearchRepository, SearchRepository>();
     builder.Services.AddScoped<ISearchService, SearchService>();
     
+    builder.Services.AddScoped<IChatRepository, ChatRepository>();
     builder.Services.AddScoped<IChatService, ChatService>();
+    builder.Services.AddScoped<IMessageRepository, MessageRepository>();
     builder.Services.AddSignalR();
 
     // builder.WebHost.ConfigureKestrel((opt) =>

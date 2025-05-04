@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250502004925_RenameChatStuffToChat")]
+    partial class RenameChatStuffToChat
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,56 +25,6 @@ namespace Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("Core.Entities.Chat.ChatMessageDeliveredReceipt", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("MessageId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("MessageId", "UserId")
-                        .HasDatabaseName("IX_MessageDeliveredReceipts_MessageId_UserId");
-
-                    b.ToTable("ChatMessageDeliveredReceipts");
-                });
-
-            modelBuilder.Entity("Core.Entities.Chat.ChatMessageReadReceipt", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("MessageId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("MessageId", "UserId")
-                        .HasDatabaseName("IX_MessageReadReceipts_MessageId_UserId");
-
-                    b.ToTable("ChatMessageReadReceipts");
-                });
 
             modelBuilder.Entity("Core.Entities.Chat.ChatRoom", b =>
                 {
@@ -156,9 +109,6 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("ShowLastSeen")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("ShowOnline")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("StatusMessage")
                         .HasColumnType("text");
 
@@ -179,8 +129,9 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("ChatRoomId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ClientMessageId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("ClientMessageId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -189,7 +140,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Text")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -206,6 +156,56 @@ namespace Infrastructure.Migrations
                         .HasDatabaseName("IX_Messages_ChatRoomId_CreatedAt");
 
                     b.ToTable("ChatMessages");
+                });
+
+            modelBuilder.Entity("Core.Entities.Chat.MessageDeliveredReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("MessageId", "UserId")
+                        .HasDatabaseName("IX_MessageDeliveredReceipts_MessageId_UserId");
+
+                    b.ToTable("ChatMessageDeliveredReceipts");
+                });
+
+            modelBuilder.Entity("Core.Entities.Chat.MessageReadReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("MessageId", "UserId")
+                        .HasDatabaseName("IX_MessageReadReceipts_MessageId_UserId");
+
+                    b.ToTable("ChatMessageReadReceipts");
                 });
 
             modelBuilder.Entity("Core.Entities.Comment", b =>
@@ -594,44 +594,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Core.Entities.Chat.ChatMessageDeliveredReceipt", b =>
-                {
-                    b.HasOne("Core.Entities.Chat.Message", "Message")
-                        .WithMany("MessageDeliveredReceipts")
-                        .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Core.Entities.Chat.ChatUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Message");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Core.Entities.Chat.ChatMessageReadReceipt", b =>
-                {
-                    b.HasOne("Core.Entities.Chat.Message", "Message")
-                        .WithMany("MessageReadReceipts")
-                        .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Core.Entities.Chat.ChatUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Message");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Core.Entities.Chat.ChatRoomParticipant", b =>
                 {
                     b.HasOne("Core.Entities.Chat.ChatRoom", "ChatRoom")
@@ -679,6 +641,44 @@ namespace Infrastructure.Migrations
                     b.Navigation("ChatRoom");
 
                     b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Core.Entities.Chat.MessageDeliveredReceipt", b =>
+                {
+                    b.HasOne("Core.Entities.Chat.Message", "Message")
+                        .WithMany("MessageDeliveredReceipts")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Core.Entities.VoyagerUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Core.Entities.Chat.MessageReadReceipt", b =>
+                {
+                    b.HasOne("Core.Entities.Chat.Message", "Message")
+                        .WithMany("MessageReadReceipts")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Core.Entities.VoyagerUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Core.Entities.Comment", b =>

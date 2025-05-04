@@ -9,9 +9,8 @@ namespace Api.Controllers;
 
 [Route("users")]
 [ApiController]
-public class UserController(IAuthService authService, 
-    IUserService userService, 
-    IVoyageService voyageService) : BaseApiController
+public class UserController( 
+    IUserService userService) : BaseApiController
 {
     [HttpGet("me")]
     [Authorize]

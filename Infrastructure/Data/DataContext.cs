@@ -1,4 +1,5 @@
 using Core.Entities;
+using Core.Entities.Chat;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data;
@@ -12,6 +13,15 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
     public DbSet<Like> Likes { get; set; }
     public DbSet<Comment> Comments { get; set; }
     public DbSet<UserChangeLog> UserChangeLogs { get; set; }
+    
+    // chat
+    public DbSet<ChatUser> ChatUsers { get; set; }
+    public DbSet<ChatRoom> ChatRooms { get; set; }
+    public DbSet<ChatRoomParticipant> ChatRoomParticipants { get; set; }
+    public DbSet<Message> ChatMessages { get; set; }
+    public DbSet<ChatMessageReadReceipt> ChatMessageReadReceipts { get; set; }
+    public DbSet<ChatMessageDeliveredReceipt> ChatMessageDeliveredReceipts { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.UseIdentityColumns();
@@ -106,9 +116,73 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
             // general config
             entity.Property(c => c.Content)
                 .IsRequired()
-                .HasMaxLength(500); // Optional: Set a max length for comment content
+                .HasMaxLength(500);
         });
 
+        // chat table relations
+        var chatUserEntity = modelBuilder.Entity<ChatUser>();
+        
+        chatUserEntity.HasOne(u => u.User)
+            .WithOne()
+            .HasForeignKey<ChatUser>(u => u.Id)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        var chatRoomEntity = modelBuilder.Entity<ChatRoom>();
+
+        chatRoomEntity.HasMany(c => c.Participants)
+            .WithOne(p => p.ChatRoom)
+            .HasForeignKey(p => p.ChatRoomId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        chatRoomEntity.HasMany(c => c.Messages)
+            .WithOne(m => m.ChatRoom)
+            .HasForeignKey(m => m.ChatRoomId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        var messageEntity = modelBuilder.Entity<Message>();
+        
+        messageEntity.HasMany(m => m.MessageReadReceipts)
+            .WithOne(d => d.Message)
+            .HasForeignKey(d => d.MessageId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        messageEntity.HasMany(m => m.MessageDeliveredReceipts)
+            .WithOne(r => r.Message)
+            .HasForeignKey(r => r.MessageId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        messageEntity.HasOne<ChatUser>(m => m.Sender)
+            .WithMany()
+            .HasForeignKey(m => m.SenderId)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        // chat indexes
+        
+        // for filtering by chat room, sorted by date
+        messageEntity
+            .HasIndex(m => new { m.ChatRoomId, m.CreatedAt })
+            .HasDatabaseName("IX_Messages_ChatRoomId_CreatedAt");
+
+        // for checking if user has read a message
+        modelBuilder.Entity<ChatMessageReadReceipt>()
+            .HasIndex(r => new { r.MessageId, r.UserId })
+            .HasDatabaseName("IX_MessageReadReceipts_MessageId_UserId");
+        
+        // for checking if a message has been delivered
+        modelBuilder.Entity<ChatMessageDeliveredReceipt>()
+            .HasIndex(r => new { r.MessageId, r.UserId })
+            .HasDatabaseName("IX_MessageDeliveredReceipts_MessageId_UserId");
+        
+        // for getting the rooms a user is in 
+        modelBuilder.Entity<ChatRoomParticipant>()
+            .HasIndex(p => p.UserId)
+            .HasDatabaseName("IX_ChatRoomParticipants_UserId");
+        
+        modelBuilder.Entity<ChatRoomParticipant>()
+            .HasIndex(p => new { p.ChatRoomId, p.UserId })
+            .IsUnique()
+            .HasDatabaseName("IX_ChatRoomParticipants_ChatRoomId_UserId_Unique");
+        
         
         base.OnModelCreating(modelBuilder);
     }

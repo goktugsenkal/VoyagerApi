@@ -65,11 +65,11 @@ public static class ChatRoomTypeExtensions
     }
     
     // create chat room model -> chat room
-    public static ChatRoom ToChatRoom(this CreateChatRoomModel model)
+    public static ChatRoom ToChatRoom(this CreateChatRoomModel model, ChatRoomType type)
     {
         return new ChatRoom
         {
-            Type = model.Type,
+            Type = type,
             Title = model.Title,
             Description = model.Description,
         };

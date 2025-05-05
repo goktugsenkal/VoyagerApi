@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Api.Chat.Hubs;
 
-public class ChatHub(IChatService chatService, IRedisService redisService, ILogger logger) : Hub
+public class ChatHub(IChatService chatService, IRedisService redisService, ILogger<ChatHub> logger) : Hub
 {
     // // In-memory store for demo purposes only.
     // // In production, back this with a database or distributed cache.

@@ -32,14 +32,27 @@ public class ChatController(IChatService chatService) : BaseApiController
             return NotFound(new { error = ex.Message });
         }
     }
+    
+    [Authorize]
     [HttpPost("rooms")]
     public async Task<IActionResult> CreateChatRoom([FromBody] CreateChatRoomModel model)
     {
+        var userId = GetUserIdFromTokenClaims();
+        if (userId == null)
+            return Unauthorized("User ID not found in token claims.");
+        
         try
         {
             // validate media types
             ValidateMediaTypes(model.ImageType);
             ValidateMediaTypes(model.BannerType);
+            
+            // add the creator as an admin
+            model.ParticipantModels.Add(new CreateChatRoomParticipantModel
+            {
+                IsAdmin = true,
+                UserId = userId.Value
+            });
             
             var result = await chatService.CreateChatRoomAsync(model);
             return Ok(result);

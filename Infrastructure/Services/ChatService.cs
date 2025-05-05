@@ -49,7 +49,7 @@ public class ChatService(IChatRepository chatRepository,
     public async Task<CreateChatRoomResult> CreateChatRoomAsync(CreateChatRoomModel roomModel)
     {
         // map the CreateChatRoomModel to a ChatRoom
-        var chatRoom = roomModel.ToChatRoom();
+        var chatRoom = roomModel.ToChatRoom(type: roomModel.ParticipantModels.Count > 2 ? ChatRoomType.Group : ChatRoomType.Private);
 
         // save to the database to get the ID
         await chatRepository.AddChatRoomAsync(chatRoom);

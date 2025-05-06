@@ -143,12 +143,16 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
         
         messageEntity.HasMany(m => m.MessageReadReceipts)
             .WithOne(d => d.Message)
-            .HasForeignKey(d => d.MessageId)
+            .HasForeignKey(d => d.ClientMessageId)
+            .HasPrincipalKey(m => m.ClientMessageId)      // principal column
+            .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
         
         messageEntity.HasMany(m => m.MessageDeliveredReceipts)
             .WithOne(r => r.Message)
-            .HasForeignKey(r => r.MessageId)
+            .HasForeignKey(r => r.ClientMessageId)
+            .HasPrincipalKey(m => m.ClientMessageId)      // principal column
+            .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
         
         messageEntity.HasOne<ChatUser>(m => m.Sender)
@@ -165,12 +169,12 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
 
         // for checking if user has read a message
         modelBuilder.Entity<ChatMessageReadReceipt>()
-            .HasIndex(r => new { r.MessageId, r.UserId })
+            .HasIndex(r => new { MessageId = r.ClientMessageId, r.UserId })
             .HasDatabaseName("IX_MessageReadReceipts_MessageId_UserId");
         
         // for checking if a message has been delivered
         modelBuilder.Entity<ChatMessageDeliveredReceipt>()
-            .HasIndex(r => new { r.MessageId, r.UserId })
+            .HasIndex(r => new { MessageId = r.ClientMessageId, r.UserId })
             .HasDatabaseName("IX_MessageDeliveredReceipts_MessageId_UserId");
         
         // for getting the rooms a user is in 

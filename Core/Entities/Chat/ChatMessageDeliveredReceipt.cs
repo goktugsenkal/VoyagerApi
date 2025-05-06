@@ -5,7 +5,7 @@ namespace Core.Entities.Chat;
 /// </summary>
 public class ChatMessageDeliveredReceipt : BaseEntity
 {
-    public Guid MessageId { get; set; }
+    public Guid ClientMessageId { get; set; }
     public Message Message { get; set; } = null!;
 
     public Guid UserId { get; set; }

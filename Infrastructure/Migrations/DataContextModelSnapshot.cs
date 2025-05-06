@@ -29,11 +29,11 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("ClientMessageId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("MessageId")
-                        .HasColumnType("uuid");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -42,7 +42,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("MessageId", "UserId")
+                    b.HasIndex("ClientMessageId", "UserId")
                         .HasDatabaseName("IX_MessageDeliveredReceipts_MessageId_UserId");
 
                     b.ToTable("ChatMessageDeliveredReceipts");
@@ -54,11 +54,11 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("ClientMessageId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("MessageId")
-                        .HasColumnType("uuid");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -67,7 +67,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("MessageId", "UserId")
+                    b.HasIndex("ClientMessageId", "UserId")
                         .HasDatabaseName("IX_MessageReadReceipts_MessageId_UserId");
 
                     b.ToTable("ChatMessageReadReceipts");
@@ -598,7 +598,8 @@ namespace Infrastructure.Migrations
                 {
                     b.HasOne("Core.Entities.Chat.Message", "Message")
                         .WithMany("MessageDeliveredReceipts")
-                        .HasForeignKey("MessageId")
+                        .HasForeignKey("ClientMessageId")
+                        .HasPrincipalKey("ClientMessageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -617,7 +618,8 @@ namespace Infrastructure.Migrations
                 {
                     b.HasOne("Core.Entities.Chat.Message", "Message")
                         .WithMany("MessageReadReceipts")
-                        .HasForeignKey("MessageId")
+                        .HasForeignKey("ClientMessageId")
+                        .HasPrincipalKey("ClientMessageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

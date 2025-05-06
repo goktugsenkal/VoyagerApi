@@ -21,5 +21,5 @@ public interface IChatService
     Task EditMessageAsync(Guid messageId, string newText);
     Task DeleteMessageAsync(Guid messageId);
     Task MarkMessageAsReadAsync(Guid messageId, Guid readerId);
-    Task MarkMessageAsDeliveredAsync(Guid messageId, Guid receiverId);
+    Task MarkMessageAsDeliveredAsync(Guid messageId, Guid userId);
 }

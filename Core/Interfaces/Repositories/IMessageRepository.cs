@@ -8,7 +8,7 @@ public interface IMessageRepository
     Task RemoveAsync(Message message);
     Task<Message?> GetByIdAsync(Guid messageId);
     
-    Task AddReadReceiptAsync(Guid messageId, Guid userId);
-    Task AddDeliveredReceiptAsync(Guid messageId, Guid userId);
+    Task AddReadReceiptAsync(ChatMessageReadReceipt receipt);
+    Task AddDeliveredReceiptAsync(ChatMessageDeliveredReceipt receipt);
     Task SaveChangesAsync();
 }

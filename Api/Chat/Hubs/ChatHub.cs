@@ -101,74 +101,74 @@ public class ChatHub(IChatService chatService, IRedisService redisService, ILogg
     /// <param name="message">Message text.</param>
     /// <param name="voyageId">If the message contains a voyage, its ID will be included</param>
     public async Task SendMessage(string roomId, string userId, string messageId, string message, string? voyageId = null)
-{
-    logger.LogInformation("[SendMessage] raw input - roomId: {RoomId}, userId: {UserId}, messageId: {MessageId}, message: {Message}, voyageId: {VoyageId}", roomId, userId, messageId, message, voyageId);
-
-    Guid parsedMessageId, parsedRoomId, parsedUserId;
-    DateTime timestamp = DateTime.UtcNow;
-
-    try
     {
-        parsedMessageId = Guid.Parse(messageId);
-        logger.LogInformation("[SendMessage] parsedMessageId: {ParsedMessageId}", parsedMessageId);
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "[SendMessage] failed to parse messageId: {MessageId}", messageId);
-        throw;
-    }
+        logger.LogInformation("[SendMessage] raw input - roomId: {RoomId}, userId: {UserId}, messageId: {MessageId}, message: {Message}, voyageId: {VoyageId}", roomId, userId, messageId, message, voyageId);
 
-    try
-    {
-        parsedRoomId = Guid.Parse(roomId);
-        logger.LogInformation("[SendMessage] parsedRoomId: {ParsedRoomId}", parsedRoomId);
+        Guid parsedMessageId, parsedRoomId, parsedUserId;
+        DateTime timestamp = DateTime.UtcNow;
+
+        try
+        {
+            parsedMessageId = Guid.Parse(messageId);
+            logger.LogInformation("[SendMessage] parsedMessageId: {ParsedMessageId}", parsedMessageId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "[SendMessage] failed to parse messageId: {MessageId}", messageId);
+            throw;
+        }
+
+        try
+        {
+            parsedRoomId = Guid.Parse(roomId);
+            logger.LogInformation("[SendMessage] parsedRoomId: {ParsedRoomId}", parsedRoomId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "[SendMessage] failed to parse roomId: {RoomId}", roomId);
+            throw;
+        }
+
+        try
+        {
+            parsedUserId = Guid.Parse(userId);
+            logger.LogInformation("[SendMessage] parsedUserId: {ParsedUserId}", parsedUserId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "[SendMessage] failed to parse userId: {UserId}", userId);
+            throw;
+        }
+
+        logger.LogInformation("[SendMessage] timestamp: {Timestamp}", timestamp);
+
+        if (!string.IsNullOrEmpty(voyageId))
+        {
+            logger.LogInformation("[SendMessage] message includes a voyageId: {VoyageId}", voyageId);
+            
+            await Clients.OthersInGroup(roomId).SendAsync("MessageReceived", roomId, userId, messageId, message, timestamp, voyageId);
+            logger.LogInformation("[SendMessage] sent MessageReceived event to OthersInGroup with voyageId");
+
+            await chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedUserId, message, Guid.Parse(voyageId));
+            logger.LogInformation("[SendMessage] saved message with voyageId to chatService");
+
+            await chatService.MarkMessageAsDeliveredAsync(parsedMessageId, parsedUserId);
+            logger.LogInformation("[SendMessage] marked message as delivered with voyageId");
+        }
+        else
+        {
+            logger.LogInformation("[SendMessage] message has no voyageId");
+            
+            await Clients.OthersInGroup(roomId).SendAsync("MessageReceived", roomId, userId, messageId, message, timestamp);
+            logger.LogInformation("[SendMessage] sent MessageReceived event to OthersInGroup without voyageId");
+
+            await chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedUserId, message);
+            logger.LogInformation("[SendMessage] saved message without voyageId to chatService");
+
+            await chatService.MarkMessageAsDeliveredAsync(parsedMessageId, parsedUserId);
+            logger.LogInformation("[SendMessage] marked message as delivered without voyageId");
+        }
     }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "[SendMessage] failed to parse roomId: {RoomId}", roomId);
-        throw;
-    }
-
-    try
-    {
-        parsedUserId = Guid.Parse(userId);
-        logger.LogInformation("[SendMessage] parsedUserId: {ParsedUserId}", parsedUserId);
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "[SendMessage] failed to parse userId: {UserId}", userId);
-        throw;
-    }
-
-    logger.LogInformation("[SendMessage] timestamp: {Timestamp}", timestamp);
-
-    if (!string.IsNullOrEmpty(voyageId))
-    {
-        logger.LogInformation("[SendMessage] message includes a voyageId: {VoyageId}", voyageId);
-        
-        await Clients.OthersInGroup(roomId).SendAsync("MessageReceived", roomId, userId, messageId, message, timestamp, voyageId);
-        logger.LogInformation("[SendMessage] sent MessageReceived event to OthersInGroup with voyageId");
-
-        await chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedUserId, message, Guid.Parse(voyageId));
-        logger.LogInformation("[SendMessage] saved message with voyageId to chatService");
-
-        await chatService.MarkMessageAsDeliveredAsync(parsedMessageId, parsedUserId);
-        logger.LogInformation("[SendMessage] marked message as delivered with voyageId");
-    }
-    else
-    {
-        logger.LogInformation("[SendMessage] message has no voyageId");
-        
-        await Clients.OthersInGroup(roomId).SendAsync("MessageReceived", roomId, userId, messageId, message, timestamp);
-        logger.LogInformation("[SendMessage] sent MessageReceived event to OthersInGroup without voyageId");
-
-        await chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedUserId, message);
-        logger.LogInformation("[SendMessage] saved message without voyageId to chatService");
-
-        await chatService.MarkMessageAsDeliveredAsync(parsedMessageId, parsedUserId);
-        logger.LogInformation("[SendMessage] marked message as delivered without voyageId");
-    }
-}
 
     /// <summary>
     /// Notify others in the room that the caller is typing.
@@ -201,12 +201,12 @@ public class ChatHub(IChatService chatService, IRedisService redisService, ILogg
     public async Task MarkAsRead(string roomId, string messageId, string userId)
     {
         var parsedMessageId = Guid.Parse(messageId);
-        var parsedRoomId = Guid.Parse(roomId);
+        var parsedUserId = Guid.Parse(userId);
         
         await Clients.Group(roomId)
             .SendAsync("ReadReceipt", roomId, messageId, userId, DateTime.UtcNow);
         
-        await chatService.MarkMessageAsReadAsync(parsedMessageId, parsedRoomId);
+        await chatService.MarkMessageAsReadAsync(parsedMessageId, parsedUserId);
     }
 
     /// <summary>

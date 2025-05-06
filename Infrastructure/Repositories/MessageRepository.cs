@@ -26,11 +26,11 @@ public class MessageRepository(DataContext context) : IMessageRepository
         return await context.ChatMessages.FirstOrDefaultAsync(m => m.Id == messageId);
     }
 
-    public async Task AddReadReceiptAsync(Guid message, Guid userId)
+    public async Task AddReadReceiptAsync(Guid messageId, Guid userId)
     {
         var receipt = new ChatMessageReadReceipt
         {
-            MessageId = message,
+            ClientMessageId = messageId,
             UserId = userId,
             CreatedAt = DateTime.UtcNow
         };
@@ -39,11 +39,11 @@ public class MessageRepository(DataContext context) : IMessageRepository
         await SaveChangesAsync();
     }
 
-    public async Task AddDeliveredReceiptAsync(Guid message, Guid userId)
+    public async Task AddDeliveredReceiptAsync(Guid messageId, Guid userId)
     {
         var receipt = new ChatMessageDeliveredReceipt
         {
-            MessageId = message,
+            ClientMessageId = messageId,
             UserId = userId,
             CreatedAt = DateTime.UtcNow
         };

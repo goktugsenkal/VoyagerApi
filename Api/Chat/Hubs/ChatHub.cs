@@ -48,8 +48,8 @@ public class ChatHub(IChatService chatService, IRedisService redisService, ILogg
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         // Get user ID
-        var userId = Context.User?.Identity?.Name ?? Context.ConnectionId;
-        // Notify everyone that this user went offline
+        var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
         await Clients.Others.SendAsync("UserOffline", userId);
 
         if (Guid.TryParse(userId, out var guid))
@@ -145,7 +145,7 @@ public class ChatHub(IChatService chatService, IRedisService redisService, ILogg
         if (!string.IsNullOrEmpty(voyageId))
         {
             logger.LogInformation("[SendMessage] message includes a voyageId: {VoyageId}", voyageId);
-            
+
             await Clients.OthersInGroup(roomId).SendAsync("MessageReceived", roomId, userId, messageId, message, timestamp, voyageId);
             logger.LogInformation("[SendMessage] sent MessageReceived event to OthersInGroup with voyageId");
 
@@ -158,7 +158,7 @@ public class ChatHub(IChatService chatService, IRedisService redisService, ILogg
         else
         {
             logger.LogInformation("[SendMessage] message has no voyageId");
-            
+
             await Clients.OthersInGroup(roomId).SendAsync("MessageReceived", roomId, userId, messageId, message, timestamp);
             logger.LogInformation("[SendMessage] sent MessageReceived event to OthersInGroup without voyageId");
 
@@ -202,10 +202,10 @@ public class ChatHub(IChatService chatService, IRedisService redisService, ILogg
     {
         var parsedMessageId = Guid.Parse(messageId);
         var parsedUserId = Guid.Parse(userId);
-        
+
         await Clients.Group(roomId)
             .SendAsync("ReadReceipt", roomId, messageId, userId, DateTime.UtcNow);
-        
+
         await chatService.MarkMessageAsReadAsync(parsedMessageId, parsedUserId);
     }
 
@@ -240,12 +240,12 @@ public class ChatHub(IChatService chatService, IRedisService redisService, ILogg
     /// <param name="roomId">Room where the message resides.</param>
     /// <param name="userId">Which user deleted the message (the sender of the message, an admin, ...). </param>
     /// <param name="messageId">Identifier of the message.</param>
-    public async Task MarkAsDeleted(string roomId,string userId, string messageId)
+    public async Task MarkAsDeleted(string roomId, string userId, string messageId)
     {
         var parsedMessageId = Guid.Parse(messageId);
-        
+
         await chatService.DeleteMessageAsync(parsedMessageId);
-        
+
         await Clients.Group(roomId)
                      .SendAsync("DeletedReceipt", roomId, messageId);
     }

@@ -19,7 +19,7 @@ public class VoyagerUser : UpdatableBaseEntity
     public int CompletedPlanCount { get; set; }
     public int LikeCount { get; set; }
     public int InspiredCount { get; set; }
-    
+
     public string Username { get; set; } = string.Empty; //
     public string NormalizedUsername { get; set; } = string.Empty;
     public string NormalizedEmail { get; set; } = string.Empty;
@@ -33,11 +33,11 @@ public class VoyagerUser : UpdatableBaseEntity
     public int AccessFailedCount { get; set; }
     public bool LockoutEnabled { get; set; }
     public DateTime? LockoutEnd { get; set; }
-    
+
     // public string? RefreshToken { get; set; }
     // public DateTime? RefreshTokenExpiryTime { get; set; }
-    
-    public List<RefreshToken> RefreshTokens { get; set; }
+
+    public List<UserSession> RefreshTokens { get; set; }
 
     public ICollection<Voyage> Voyages { get; set; }
 }

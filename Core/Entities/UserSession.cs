@@ -5,7 +5,7 @@ public class UserSession : BaseEntity
     public string Token { get; set; }
     public DateTime ExpiresAt { get; set; }
     public Guid DeviceId { get; set; }
-    public string FcmToken { get; set; }
+    public string? FcmToken { get; set; }
     public string CreatedByIp { get; set; }
     public DateTime? RevokedAt { get; set; }
     public string? RevokedByIp { get; set; }

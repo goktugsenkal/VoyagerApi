@@ -399,7 +399,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FcmToken")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("ReplacedByToken")

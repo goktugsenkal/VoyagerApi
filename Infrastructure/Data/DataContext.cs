@@ -7,13 +7,13 @@ namespace Infrastructure.Data;
 public class DataContext(DbContextOptions<DataContext> options) : DbContext(options)
 {
     public DbSet<VoyagerUser> Users { get; set; }
-    public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<UserSession> RefreshTokens { get; set; }
     public DbSet<Voyage> Voyages { get; set; }
     public DbSet<Stop> Stops { get; set; }
     public DbSet<Like> Likes { get; set; }
     public DbSet<Comment> Comments { get; set; }
     public DbSet<UserChangeLog> UserChangeLogs { get; set; }
-    
+
     // chat
     public DbSet<ChatUser> ChatUsers { get; set; }
     public DbSet<ChatRoom> ChatRooms { get; set; }
@@ -21,7 +21,7 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
     public DbSet<Message> ChatMessages { get; set; }
     public DbSet<ChatMessageReadReceipt> ChatMessageReadReceipts { get; set; }
     public DbSet<ChatMessageDeliveredReceipt> ChatMessageDeliveredReceipts { get; set; }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.UseIdentityColumns();
@@ -33,7 +33,7 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
             .OnDelete(DeleteBehavior.NoAction);
 
         var voyagerUserEntity = modelBuilder.Entity<VoyagerUser>();
-        
+
         voyagerUserEntity.HasIndex(u => u.Username)
             .IsUnique();
 
@@ -87,7 +87,7 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
                 .HasConversion<int>(); // Enum stored as integer
         });
 
-        
+
         modelBuilder.Entity<Comment>(entity =>
         {
             // table name
@@ -121,47 +121,47 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
 
         // chat table relations
         var chatUserEntity = modelBuilder.Entity<ChatUser>();
-        
+
         chatUserEntity.HasOne(u => u.User)
             .WithOne()
             .HasForeignKey<ChatUser>(u => u.Id)
             .OnDelete(DeleteBehavior.NoAction);
-        
+
         var chatRoomEntity = modelBuilder.Entity<ChatRoom>();
 
         chatRoomEntity.HasMany(c => c.Participants)
             .WithOne(p => p.ChatRoom)
             .HasForeignKey(p => p.ChatRoomId)
             .OnDelete(DeleteBehavior.Cascade);
-        
+
         chatRoomEntity.HasMany(c => c.Messages)
             .WithOne(m => m.ChatRoom)
             .HasForeignKey(m => m.ChatRoomId)
             .OnDelete(DeleteBehavior.Cascade);
-        
+
         var messageEntity = modelBuilder.Entity<Message>();
-        
+
         messageEntity.HasMany(m => m.MessageReadReceipts)
             .WithOne(d => d.Message)
             .HasForeignKey(d => d.ClientMessageId)
             .HasPrincipalKey(m => m.ClientMessageId)      // principal column
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
-        
+
         messageEntity.HasMany(m => m.MessageDeliveredReceipts)
             .WithOne(r => r.Message)
             .HasForeignKey(r => r.ClientMessageId)
             .HasPrincipalKey(m => m.ClientMessageId)      // principal column
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
-        
+
         messageEntity.HasOne<ChatUser>(m => m.Sender)
             .WithMany()
             .HasForeignKey(m => m.SenderId)
             .OnDelete(DeleteBehavior.NoAction);
-        
+
         // chat indexes
-        
+
         // for filtering by chat room, sorted by date
         messageEntity
             .HasIndex(m => new { m.ChatRoomId, m.CreatedAt })
@@ -171,23 +171,23 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
         modelBuilder.Entity<ChatMessageReadReceipt>()
             .HasIndex(r => new { MessageId = r.ClientMessageId, r.UserId })
             .HasDatabaseName("IX_MessageReadReceipts_MessageId_UserId");
-        
+
         // for checking if a message has been delivered
         modelBuilder.Entity<ChatMessageDeliveredReceipt>()
             .HasIndex(r => new { MessageId = r.ClientMessageId, r.UserId })
             .HasDatabaseName("IX_MessageDeliveredReceipts_MessageId_UserId");
-        
+
         // for getting the rooms a user is in 
         modelBuilder.Entity<ChatRoomParticipant>()
             .HasIndex(p => p.UserId)
             .HasDatabaseName("IX_ChatRoomParticipants_UserId");
-        
+
         modelBuilder.Entity<ChatRoomParticipant>()
             .HasIndex(p => new { p.ChatRoomId, p.UserId })
             .IsUnique()
             .HasDatabaseName("IX_ChatRoomParticipants_ChatRoomId_UserId_Unique");
-        
-        
+
+
         base.OnModelCreating(modelBuilder);
     }
 }

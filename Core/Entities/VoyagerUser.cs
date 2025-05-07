@@ -37,7 +37,7 @@ public class VoyagerUser : UpdatableBaseEntity
     // public string? RefreshToken { get; set; }
     // public DateTime? RefreshTokenExpiryTime { get; set; }
 
-    public List<UserSession> RefreshTokens { get; set; }
+    public List<UserSession> UserSessions { get; set; }
 
     public ICollection<Voyage> Voyages { get; set; }
 }

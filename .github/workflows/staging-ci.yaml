@@ -93,7 +93,7 @@ jobs:
             cp \$TMP_CONFIG_DIR/staging.json Api/appsettings.json
 
             echo 'Running EF migrations for STAGING...'
-            Environment=Staging dotnet ef database update -s Api/ -p Infrastructure/ --no-build
+            Environment=Staging dotnet ef database update -s Api/ -p Infrastructure/
 
             echo 'Restarting STAGING service...'
             sudo systemctl restart voyager-staging.service

@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NLog;
@@ -41,7 +42,10 @@ try
     // Add services to the container.
     builder.Services.AddControllers();
     builder.Services.AddDbContext<DataContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetSection("ConnectionStrings:DefaultConnection").Value));
+    {
+        options.UseNpgsql(builder.Configuration.GetSection("ConnectionStrings:DefaultConnection").Value);
+        options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+    });
     
     builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
         ConnectionMultiplexer.Connect(builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379"));

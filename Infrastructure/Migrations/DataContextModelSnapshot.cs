@@ -422,7 +422,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("UserSessions");
                 });
 
             modelBuilder.Entity("Core.Entities.Voyage", b =>
@@ -754,7 +754,7 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Core.Entities.UserSession", b =>
                 {
                     b.HasOne("Core.Entities.VoyagerUser", "User")
-                        .WithMany("RefreshTokens")
+                        .WithMany("UserSessions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -803,7 +803,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Core.Entities.VoyagerUser", b =>
                 {
-                    b.Navigation("RefreshTokens");
+                    b.Navigation("UserSessions");
 
                     b.Navigation("Voyages");
                 });

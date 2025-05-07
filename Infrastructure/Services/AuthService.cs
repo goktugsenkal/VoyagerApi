@@ -141,7 +141,7 @@ public class AuthService(
             CreatedByIp = ipAddress,
             UserId = req.UserId
         };
-        context.RefreshTokens.Add(newRt);
+        context.UserSessions.Add(newRt);
         await context.SaveChangesAsync();
 
         // return new pair
@@ -175,7 +175,7 @@ public class AuthService(
 
     private async Task<UserSession?> GetValidRefreshTokenAsync(Guid userId, string token, Guid deviceId)
     {
-        return await context.RefreshTokens
+        return await context.UserSessions
             .SingleOrDefaultAsync(rt =>
                 rt.UserId == userId
                 && rt.Token == token
@@ -207,7 +207,7 @@ public class AuthService(
             UserId = user.Id,
             FcmToken = fcmToken
         };
-        context.RefreshTokens.Add(rt);
+        context.UserSessions.Add(rt);
         await context.SaveChangesAsync();
         return token;
     }

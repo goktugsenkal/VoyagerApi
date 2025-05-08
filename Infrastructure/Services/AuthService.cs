@@ -207,8 +207,6 @@ public class AuthService(
         string? fcmToken)
     {
         var userSessions = await GetValidRefreshTokensAsync(user.Id, deviceId);
-        if (userSessions.Count < 1)
-            return null;
 
         var newToken = GenerateRefreshToken();
         

@@ -1,5 +1,7 @@
+using System.Collections;
 using Core.Dtos;
 using Core.Entities;
+using Core.Exceptions;
 using Core.Interfaces;
 using Core.Interfaces.Repositories;
 using Core.Interfaces.Services;
@@ -21,6 +23,15 @@ public class UserService(
         
         // can return null
         return user?.Username;
+    }
+
+    public async Task<List<string>> GetFcmTokensByIdAsync(Guid id)
+    {
+        var fcmTokens = await userRepository.GetFcmTokensByIdAsync(id);
+        if (fcmTokens.Count < 1 || fcmTokens == null)
+            throw new FcmTokenNotFoundException(id);
+
+        return fcmTokens!;
     }
 
     public async Task<PagedList<VoyagerUserDto>> GetAllUsersAsync(int pageNumber, int pageSize)

@@ -60,7 +60,8 @@ public class AuthService(
         return await CreateTokenResponse(user, request.DeviceId, ipAddress, request.FcmToken);
     }
 
-    private async Task<TokenResponseDto> CreateTokenResponse(VoyagerUser? user, Guid deviceId, string ipAddress, string? fcmToken)
+    private async Task<TokenResponseDto> CreateTokenResponse(VoyagerUser? user, Guid deviceId, string ipAddress,
+        string? fcmToken)
     {
         return new TokenResponseDto
         {
@@ -120,27 +121,34 @@ public class AuthService(
 
     public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestModel req, string ipAddress)
     {
-        var rt = await GetValidRefreshTokenAsync(req.UserId, req.RefreshToken, req.DeviceId);
-        if (rt == null)
+        var userSessions = await GetValidRefreshTokensAsync(req.UserId, req.DeviceId);
+        if (userSessions.Count < 1)
             return null;
 
-        // revoke the old one
-        rt.RevokedAt = DateTime.UtcNow;
-        rt.RevokedByIp = ipAddress;
-        // rotate
         var newToken = GenerateRefreshToken();
-        rt.ReplacedByToken = newToken;
+        
+        foreach (var userSession in userSessions)
+        {
+            // revoke the old one
+            userSession.RevokedAt = DateTime.UtcNow;
+            userSession.RevokedByIp = ipAddress;
+            // rotate
+            userSession.ReplacedByToken = newToken;    
+        }
+        
 
         // create a brand-new token record
         var newRt = new UserSession
         {
             Token = newToken,
+            FcmToken = req.FcmToken,
             DeviceId = req.DeviceId,
             ExpiresAt = DateTime.UtcNow.AddDays(7),
             CreatedAt = DateTime.UtcNow,
             CreatedByIp = ipAddress,
             UserId = req.UserId
         };
+        
         context.UserSessions.Add(newRt);
         await context.SaveChangesAsync();
 
@@ -173,15 +181,16 @@ public class AuthService(
     }
 
 
-    private async Task<UserSession?> GetValidRefreshTokenAsync(Guid userId, string token, Guid deviceId)
+    private async Task<List<UserSession>> GetValidRefreshTokensAsync(Guid userId, Guid deviceId)
     {
         return await context.UserSessions
-            .SingleOrDefaultAsync(rt =>
+            .Where(rt =>
                 rt.UserId == userId
-                && rt.Token == token
+                // && rt.Token == token
                 && rt.DeviceId == deviceId
                 && rt.RevokedAt == null
-                && rt.ExpiresAt > DateTime.UtcNow);
+                && rt.ExpiresAt > DateTime.UtcNow)
+            .ToListAsync();
     }
 
 
@@ -194,12 +203,25 @@ public class AuthService(
     }
 
 
-    private async Task<string> GenerateAndSaveUserSessionAsync(VoyagerUser user, Guid deviceId, string ipAddress, string? fcmToken)
+    private async Task<string> GenerateAndSaveUserSessionAsync(VoyagerUser user, Guid deviceId, string ipAddress,
+        string? fcmToken)
     {
-        var token = GenerateRefreshToken();
-        var rt = new UserSession
+        var userSessions = await GetValidRefreshTokensAsync(user.Id, deviceId);
+        if (userSessions.Count < 1)
+            return null;
+
+        var newToken = GenerateRefreshToken();
+        
+        foreach (var userSession in userSessions)
         {
-            Token = token,
+            userSession.RevokedAt = DateTime.UtcNow;
+            userSession.RevokedByIp = ipAddress;
+            userSession.ReplacedByToken = newToken;    
+        }
+        
+        var newUserSession = new UserSession
+        {
+            Token = newToken,
             DeviceId = deviceId,
             ExpiresAt = DateTime.UtcNow.AddDays(7),
             CreatedAt = DateTime.UtcNow,
@@ -207,9 +229,10 @@ public class AuthService(
             UserId = user.Id,
             FcmToken = fcmToken
         };
-        context.UserSessions.Add(rt);
+        
+        context.UserSessions.Add(newUserSession);
         await context.SaveChangesAsync();
-        return token;
+        return newToken;
     }
 
 

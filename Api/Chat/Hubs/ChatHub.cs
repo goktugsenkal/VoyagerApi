@@ -8,8 +8,10 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Api.Chat.Hubs;
 
-public class ChatHub(IChatService chatService, 
-    IRedisService redisService, 
+public class ChatHub(
+    IChatService chatService,
+    IRedisService redisService,
+    IFcmService fcmService,
     IUserService userService) : Hub
 {
     // // In-memory store for demo purposes only.
@@ -99,11 +101,12 @@ public class ChatHub(IChatService chatService,
     /// Send a message to everyone in a room.
     /// </summary>
     /// <param name="roomId">Target room name.</param>
-    /// <param name="userId">Sender identifier.</param>
+    /// <param name="senderId">Sender identifier.</param>
     /// <param name="messageId">global message id</param>
     /// <param name="message">Message text.</param>
     /// <param name="voyageId">If the message contains a voyage, its ID will be included</param>
-    public async Task SendMessage(string roomId, string userId, string messageId, string message, string? voyageId = null)
+    public async Task SendMessage(string roomId, string senderId, string messageId, string message,
+        string? voyageId = null)
     {
         var timestamp = DateTime.UtcNow;
 
@@ -111,30 +114,73 @@ public class ChatHub(IChatService chatService,
 
         var parsedRoomId = Guid.Parse(roomId);
 
-        var parsedUserId = Guid.Parse(userId);
+        var parsedSenderId = Guid.Parse(senderId);
 
+        var parsedVoyageId = string.IsNullOrEmpty(voyageId) ? Guid.Empty : Guid.Parse(voyageId);
 
         try
         {
+            // send hub message to all participants
             if (!string.IsNullOrEmpty(voyageId))
             {
-                await Clients.OthersInGroup(roomId).SendAsync("MessageReceived", roomId, userId, messageId, message,
-                    timestamp, voyageId);
+                // if there is a voyage ID, include it
+                await Task.WhenAll(
+                    Clients.OthersInGroup(roomId)
+                        .SendAsync("MessageReceived", roomId, senderId, messageId, message, timestamp, voyageId),
 
-                await chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedUserId, message,
-                    Guid.Parse(voyageId));
-
-                await chatService.MarkMessageAsDeliveredAsync(parsedMessageId, parsedUserId);
+                    // save message to database
+                    chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedSenderId, message,
+                        parsedVoyageId)
+                );
             }
             else
             {
-                await Clients.OthersInGroup(roomId)
-                    .SendAsync("MessageReceived", roomId, userId, messageId, message, timestamp);
+                // otherwise, don't
+                await Task.WhenAll(
+                    Clients.OthersInGroup(roomId)
+                        .SendAsync("MessageReceived", roomId, senderId, messageId, message, timestamp),
 
-                await chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedUserId, message);
-
-                await chatService.MarkMessageAsDeliveredAsync(parsedMessageId, parsedUserId);
+                    // save message to database
+                    chatService.SaveMessageAsync(parsedMessageId, parsedRoomId, parsedSenderId, message)
+                );
             }
+
+            // get participants of the room the message was sent to, excluding the sender
+            var participants = await chatService.GetParticipantsForChatRoomAsync(parsedRoomId);
+
+            // get online (connected to the hub) users
+            var onlineUserIdsSet = new HashSet<Guid>(await redisService.GetAllOnlineUsersAsync());
+
+            // check which participants didn't get the hub message due to being offline
+            var offlineParticipantIds = participants.Where(p => !onlineUserIdsSet.Contains(p)).ToList();
+
+            // fucking send the message notification to the fucking offline participants
+            foreach (var offlineParticipant in offlineParticipantIds)
+            {
+                var fcmTokens = await userService.GetFcmTokensByIdAsync(offlineParticipant);
+
+                if (!fcmTokens.Any()) continue;
+                foreach (var token in fcmTokens)
+                {
+                    await fcmService.SendNotificationAsync(token, "New message", message,
+                        new Dictionary<string, string>
+                        {
+                            // action, roomId, senderId, messageId, text, timestamp, voyageId?
+                            ["action"] = "MessageReceived",
+                            ["roomId"] = roomId,
+                            ["senderId"] = senderId,
+                            ["messageId"] = messageId,
+                            ["text"] = message,
+                            ["timestamp"] = timestamp.ToString("O"),
+                            ["voyageId"] = parsedVoyageId != Guid.Empty ? parsedVoyageId.ToString() : ""
+                        }
+                    );
+                }
+            }
+
+            // todo: received receipts
+            // send received receipt to the sender, if the receiver somehow got the message,
+            // either because they were online or because they received the notification
         }
         catch (FcmTokenNotFoundException e)
         {
@@ -204,7 +250,7 @@ public class ChatHub(IChatService chatService,
     {
         // Update in database first...
         await Clients.Group(roomId)
-                     .SendAsync("MessageEdited", roomId, messageId, newMessage, DateTime.UtcNow);
+            .SendAsync("MessageEdited", roomId, messageId, newMessage, DateTime.UtcNow);
     }
 
     /// <summary>
@@ -220,6 +266,6 @@ public class ChatHub(IChatService chatService,
         await chatService.DeleteMessageAsync(parsedMessageId);
 
         await Clients.Group(roomId)
-                     .SendAsync("DeletedReceipt", roomId, messageId);
+            .SendAsync("DeletedReceipt", roomId, messageId);
     }
 }

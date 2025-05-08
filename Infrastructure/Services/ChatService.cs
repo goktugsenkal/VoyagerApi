@@ -130,6 +130,11 @@ public class ChatService(IChatRepository chatRepository,
         return roomIds;
     }
 
+    public async Task<List<Guid>> GetParticipantsForChatRoomAsync(Guid roomId)
+    {
+        return await chatRepository.GetParticipantIdsForRoomAsync(roomId);
+    }
+
     public async Task<List<Guid>> GetOnlinePeersAsyncForUserAsync(Guid userId)
     {
         // 1) get all room IDs (cached + DB fallback)

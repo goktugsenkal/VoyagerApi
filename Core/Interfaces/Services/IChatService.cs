@@ -13,6 +13,7 @@ public interface IChatService
     Task<CreateChatRoomResult> CreateChatRoomAsync(CreateChatRoomModel roomModel);
     Task<PagedList<ChatRoomDto>> GetChatRoomsForUserAsync(Guid userId, int pageNumber, int pageSize);
     Task<List<Guid>> GetChatRoomIdsForUserAsync(Guid userId);
+    Task<List<Guid>> GetParticipantsForChatRoomAsync(Guid roomId);
     Task<List<Guid>> GetOnlinePeersAsyncForUserAsync(Guid userId);
     Task AddChatRoomParticipantAsync(Guid roomId, CreateChatRoomParticipantModel participantModel);
     

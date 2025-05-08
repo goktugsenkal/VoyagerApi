@@ -48,4 +48,21 @@ public class FcmService : IFcmService
 
         return await _messaging.SendAsync(message);
     }
+    
+    public async Task<string> SendBackgroundNotificationAsync(
+        string fcmToken,
+        IDictionary<string, string>? data = null)
+    {
+        // wrap data in a read-only dictionary as you fixed earlier
+        var payload = new ReadOnlyDictionary<string, string>(data ?? new Dictionary<string, string>());
+
+        var message = new Message
+        {
+            Token        = fcmToken,
+            Data         = payload,
+            FcmOptions = new FcmOptions { AnalyticsLabel = "test-label" }
+        };
+
+        return await _messaging.SendAsync(message);
+    }
 }

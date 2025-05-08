@@ -1,6 +1,11 @@
 namespace Core.Exceptions;
 
-public class FcmTokenNotFoundException
+
+public class FcmTokenNotFoundException : Exception
 {
-    
+    public FcmTokenNotFoundException(Guid userId)
+        : base($"FCM token not found for user {userId}")
+    {
+        
+    }
 }

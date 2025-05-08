@@ -53,6 +53,14 @@ public class ChatRepository(DataContext context) : IChatRepository
             .ToListAsync();
     }
 
+    public async Task<List<Guid>> GetParticipantIdsForChatRoomAsync(Guid roomId)
+    {
+        return await context.ChatRoomParticipants
+            .Where(p => p.ChatRoomId == roomId)
+            .Select(p => p.UserId)
+            .ToListAsync();
+    }
+
     public async Task AddChatRoomAsync(ChatRoom room)
     {
         room.CreatedAt = DateTime.UtcNow;
@@ -121,6 +129,9 @@ public class ChatRepository(DataContext context) : IChatRepository
     {
         return await context.ChatMessages
             .Where(m => m.ChatRoomId == roomId)
+            // todo: nothing more than extra LoC
+            // .Include(m => m.MessageDeliveredReceipts)
+            // .Include(m => m.MessageReadReceipts)
             .OrderByDescending(m => m.CreatedAt)
             .FirstOrDefaultAsync();
     }

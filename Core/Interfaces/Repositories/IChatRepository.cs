@@ -15,6 +15,7 @@ public interface IChatRepository
     Task<ChatRoom?> GetChatRoomByIdAsync(Guid roomId);
     Task<PagedList<ChatRoom>> GetChatRoomsForUserAsync(Guid userId, int pageNumber, int pageSize);
     Task<List<Guid>> GetChatRoomIdsForUserAsync(Guid userId);
+    Task<List<Guid>> GetParticipantIdsForChatRoomAsync(Guid roomId);
     Task AddChatRoomAsync(ChatRoom room);
     Task UpdateChatRoomAsync(ChatRoom room);
     Task DeleteChatRoomAsync(ChatRoom room);

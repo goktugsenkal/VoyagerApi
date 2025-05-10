@@ -7,6 +7,7 @@ using System.Text.Json;
 using Core.Dtos;
 using Core.Entities;
 using Core.Interfaces;
+using Core.Interfaces.Services;
 using Core.Models;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
@@ -122,20 +123,20 @@ public class AuthService(
     public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestModel req, string ipAddress)
     {
         var userSessions = await GetValidRefreshTokensAsync(req.UserId, req.DeviceId);
-        if (userSessions.Count < 1)
+        // ReSharper disable once SimplifyLinqExpressionUseAll
+        if (userSessions.Count < 1 || !userSessions.Any(us => us.Token == req.RefreshToken))
             return null;
 
         var newToken = GenerateRefreshToken();
-        
+
         foreach (var userSession in userSessions)
         {
             // revoke the old one
             userSession.RevokedAt = DateTime.UtcNow;
             userSession.RevokedByIp = ipAddress;
             // rotate
-            userSession.ReplacedByToken = newToken;    
+            userSession.ReplacedByToken = newToken;
         }
-        
 
         // create a brand-new token record
         var newRt = new UserSession
@@ -148,7 +149,7 @@ public class AuthService(
             CreatedByIp = ipAddress,
             UserId = req.UserId
         };
-        
+
         context.UserSessions.Add(newRt);
         await context.SaveChangesAsync();
 
@@ -209,14 +210,14 @@ public class AuthService(
         var userSessions = await GetValidRefreshTokensAsync(user.Id, deviceId);
 
         var newToken = GenerateRefreshToken();
-        
+
         foreach (var userSession in userSessions)
         {
             userSession.RevokedAt = DateTime.UtcNow;
             userSession.RevokedByIp = ipAddress;
-            userSession.ReplacedByToken = newToken;    
+            userSession.ReplacedByToken = newToken;
         }
-        
+
         var newUserSession = new UserSession
         {
             Token = newToken,
@@ -227,7 +228,7 @@ public class AuthService(
             UserId = user.Id,
             FcmToken = fcmToken
         };
-        
+
         context.UserSessions.Add(newUserSession);
         await context.SaveChangesAsync();
         return newToken;
@@ -430,4 +431,69 @@ public class AuthService(
     }
 
     #endregion
+
+    public string CreateReceiptToken(Guid userId, Guid messageId)
+    {
+        // generate claims for userId + messageId
+        var claims = new[]
+        {
+            new Claim("userId", userId.ToString()),
+            new Claim("messageId", messageId.ToString())
+        };
+
+        // create signing credentials using our secret + HS256
+        var creds = new SigningCredentials(
+            new SymmetricSecurityKey(_secretKey),
+            SecurityAlgorithms.HmacSha256
+        );
+
+        // build token descriptor with short expiry
+        var desc = new JwtSecurityToken(
+            issuer: configuration.GetValue<string>("AppSettings:Issuer"),
+            audience: configuration.GetValue<string>("AppSettings:Audience"),
+            claims: claims,
+            expires: DateTime.UtcNow.AddDays(1),
+            signingCredentials: creds
+        );
+
+        // create + write out the JWT
+        return new JwtSecurityTokenHandler().WriteToken(desc);
+    }
+
+    public (Guid UserId, Guid MessageId)? ValidateReceiptToken(string token)
+    {
+        // setup validation rules matching creation
+        var parameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(_secretKey),
+            ValidateIssuer = true,
+            ValidIssuer = configuration.GetValue<string>("AppSettings:Issuer"),
+            ValidateAudience = true,
+            ValidAudience = configuration.GetValue<string>("AppSettings:Audience"),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+
+        try
+        {
+            // validate + get principal
+            var principal = new JwtSecurityTokenHandler().ValidateToken(token, parameters, out _);
+            var uidClaim = principal.FindFirst("userId")?.Value;
+            var midClaim = principal.FindFirst("messageId")?.Value;
+
+            // try parse the GUIDs back
+            if (Guid.TryParse(uidClaim, out var uid) &&
+                Guid.TryParse(midClaim, out var mid))
+            {
+                return (uid, mid);
+            }
+        }
+        catch
+        {
+            // invalid / expired / tampered
+        }
+
+        return null;
+    }
 }

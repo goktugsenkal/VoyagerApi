@@ -1,5 +1,6 @@
 using Core.Dtos.Chat;
 using Core.Entities.Chat;
+using Core.Exceptions;
 using Core.Interfaces;
 using Core.Interfaces.Data;
 using Core.Interfaces.Repositories;
@@ -192,6 +193,11 @@ public class ChatService(IChatRepository chatRepository,
     // ________________
     public async Task SaveMessageAsync(Guid messageId, Guid roomId, Guid senderId, string text, Guid? voyageId = null)
     {
+        var chatRoom = await chatRepository.GetChatRoomByIdAsync(roomId);
+        if (chatRoom is null)
+        {
+            throw new ChatRoomNotFoundException(roomId);
+        }
         var message = new Message
         {
             Id = Guid.NewGuid(),

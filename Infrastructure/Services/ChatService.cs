@@ -223,14 +223,21 @@ public class ChatService(IChatRepository chatRepository,
 
     public async Task MarkMessageAsReadAsync(Guid messageId, Guid readerId)
     {
-        var receipt = new ChatMessageReadReceipt
+        // check if a receipt exists
+        var receipt = await messageRepository.GetReadReceiptAsync(messageId, readerId);
+        if (receipt is not null)
+        {
+            return;
+        }
+        
+        var newReceipt = new ChatMessageReadReceipt
         {
             ClientMessageId = messageId,
             UserId = readerId,
             CreatedAt = DateTime.UtcNow
         };
         
-        await messageRepository.AddReadReceiptAsync(receipt);
+        await messageRepository.AddReadReceiptAsync(newReceipt);
     }
 
     public async Task MarkMessageAsDeliveredAsync(Guid messageId, Guid userId)

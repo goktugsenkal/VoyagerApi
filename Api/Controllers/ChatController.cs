@@ -8,7 +8,7 @@ namespace Api.Controllers;
 
 [Route("chat")]
 [ApiController]
-public class ChatController(IChatService chatService) : BaseApiController
+public class ChatController(IChatService chatService, IAuthService authService) : BaseApiController
 {
     [Authorize]
     [HttpPost("signup")]
@@ -32,7 +32,7 @@ public class ChatController(IChatService chatService) : BaseApiController
             return NotFound(new { error = ex.Message });
         }
     }
-    
+
     [Authorize]
     [HttpPost("rooms")]
     public async Task<IActionResult> CreateChatRoom([FromBody] CreateChatRoomModel model)
@@ -40,20 +40,20 @@ public class ChatController(IChatService chatService) : BaseApiController
         var userId = GetUserIdFromTokenClaims();
         if (userId == null)
             return Unauthorized("User ID not found in token claims.");
-        
+
         try
         {
             // validate media types
             ValidateMediaTypes(model.ImageType);
             ValidateMediaTypes(model.BannerType);
-            
+
             // add the creator as an admin
             model.ParticipantModels.Add(new CreateChatRoomParticipantModel
             {
                 IsAdmin = true,
                 UserId = userId.Value
             });
-            
+
             var result = await chatService.CreateChatRoomAsync(model);
             return Ok(result);
         }
@@ -67,7 +67,7 @@ public class ChatController(IChatService chatService) : BaseApiController
             throw;
         }
     }
-    
+
     [Authorize]
     [HttpGet("rooms")]
     public async Task<IActionResult> GetChatRooms()
@@ -75,7 +75,7 @@ public class ChatController(IChatService chatService) : BaseApiController
         var userId = GetUserIdFromTokenClaims();
         if (userId == null)
             return Unauthorized("User ID not found in token claims.");
-        
+
         var result = await chatService.GetChatRoomsForUserAsync(userId.Value, 1, int.MaxValue);
         return Ok(result);
     }
@@ -108,6 +108,7 @@ public class ChatController(IChatService chatService) : BaseApiController
             {
                 await chatService.AddChatRoomParticipantAsync(roomGuid, model);
             }
+
             return NoContent();
         }
         catch (KeyNotFoundException ex)
@@ -122,8 +123,22 @@ public class ChatController(IChatService chatService) : BaseApiController
         var userId = GetUserIdFromTokenClaims();
         if (userId == null)
             return Unauthorized("User ID not found in token claims.");
-        
+
         var result = await chatService.GetOnlinePeersAsyncForUserAsync(userId.Value);
         return Ok(result);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("messages/received-receipt")]
+    public async Task<IActionResult> GetChatRoomMessages([FromBody] MessageReceivedReceiptModel model)
+    {
+        // validate the token and pull out userId+messageId
+        var claims = authService.ValidateReceiptToken(model.ReceiptToken);
+        if (claims == null || claims.Value.MessageId != model.MessageId)
+            return Forbid(); // invalid or tampered
+
+        // mark that message as received for that user
+        await chatService.MarkMessageAsDeliveredAsync(claims.Value.MessageId, claims.Value.UserId);
+        return Ok();
     }
 }

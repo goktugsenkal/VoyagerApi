@@ -2,7 +2,7 @@ using Core.Dtos;
 using Core.Entities;
 using Core.Models;
 
-namespace Core.Interfaces;
+namespace Core.Interfaces.Services;
 
 public interface IAuthService
 {
@@ -15,4 +15,6 @@ public interface IAuthService
     Task<bool> VerifyEmailAsync(Guid userId, string token);
     Task SendPasswordResetEmailAsync(string email);
     Task<bool> ResetPasswordAsync(string email, string token, string newPassword);
+    string CreateReceiptToken(Guid userId, Guid messageId);
+    (Guid UserId, Guid MessageId)? ValidateReceiptToken(string token);
 }

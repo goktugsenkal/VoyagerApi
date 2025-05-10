@@ -190,6 +190,10 @@ public class ChatHub(
             Console.WriteLine(e);
             throw;
         }
+        catch (ChatRoomNotFoundException e)
+        {
+            throw new HubException($"chat room not found. id: {roomId} | chatroomnotfound");
+        }
     }
 
     /// <summary>

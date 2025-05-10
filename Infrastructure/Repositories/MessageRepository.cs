@@ -26,6 +26,12 @@ public class MessageRepository(DataContext context) : IMessageRepository
         return await context.ChatMessages.FirstOrDefaultAsync(m => m.Id == messageId);
     }
 
+    public async Task<ChatMessageReadReceipt?> GetReadReceiptAsync(Guid messageId, Guid userId)
+    {
+        return await context.ChatMessageReadReceipts
+            .FirstOrDefaultAsync(r => r.ClientMessageId == messageId && r.UserId == userId);
+    }
+
     public async Task AddReadReceiptAsync(ChatMessageReadReceipt receipt)
     {
         receipt.CreatedAt = DateTime.UtcNow;

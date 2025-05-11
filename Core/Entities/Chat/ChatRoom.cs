@@ -69,6 +69,7 @@ public static class ChatRoomTypeExtensions
     {
         return new ChatRoom
         {
+            Id = model.ClientId,
             Type = type,
             Title = model.Title,
             Description = model.Description,

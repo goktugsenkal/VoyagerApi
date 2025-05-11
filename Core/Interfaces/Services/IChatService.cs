@@ -16,6 +16,7 @@ public interface IChatService
     Task<List<Guid>> GetParticipantsForChatRoomAsync(Guid roomId);
     Task<List<Guid>> GetOnlinePeersAsyncForUserAsync(Guid userId);
     Task AddChatRoomParticipantAsync(Guid roomId, CreateChatRoomParticipantModel participantModel);
+    Task<ChatUser?> GetChatUserAsync(Guid userId);
     
     // chat hub methods
     Task SaveMessageAsync(Guid messageId, Guid roomId, Guid senderId, string text, Guid? voyageId = null);

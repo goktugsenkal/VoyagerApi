@@ -155,28 +155,32 @@ public class ChatHub(
             // check which participants didn't get the hub message due to being offline
             var offlineParticipantIds = participants.Where(p => !onlineUserIdsSet.Contains(p)).ToList();
 
+            // get sender's full name
+            var senderUser = await chatService.GetChatUserAsync(parsedSenderId);
+            var senderName = senderUser?.DisplayName ?? "Anonymous";
+
             // send the FCM payload—including a one-time receiptToken—to each offline participant
             foreach (var offlineParticipant in offlineParticipantIds)
             {
                 var fcmTokens = await userService.GetFcmTokensByIdAsync(offlineParticipant);
                 if (!fcmTokens.Any()) continue;
 
+                // generate a one-time JWT scoped to this user + message
+                var receiptToken = authService.CreateReceiptToken(offlineParticipant, parsedMessageId);
+                
                 foreach (var token in fcmTokens)
                 {
-                    // generate a one-time JWT scoped to this user + message
-                    var receiptToken = authService.CreateReceiptToken(offlineParticipant, parsedMessageId);
-
                     // fucking send the message notification to the fucking offline participants
-                    await fcmService.SendNotificationAsync(token, "New message", message, new Dictionary<string, string>
+                    await fcmService.SendNotificationAsync(token, senderName, message, new Dictionary<string, string>
                     {
-                        ["action"]       = "MessageReceived",
-                        ["roomId"]       = roomId,
-                        ["senderId"]     = senderId,
-                        ["messageId"]    = messageId,
-                        ["text"]         = message,
-                        ["timestamp"]    = timestamp.ToString("O"),
-                        ["voyageId"]     = parsedVoyageId != Guid.Empty ? parsedVoyageId.ToString() : "",
-                        ["receiptToken"] = receiptToken                   // include receipt token in payload
+                        ["action"] = "MessageReceived",
+                        ["roomId"] = roomId,
+                        ["senderId"] = senderId,
+                        ["messageId"] = messageId,
+                        ["text"] = message,
+                        ["timestamp"] = timestamp.ToString("O"),
+                        ["voyageId"] = parsedVoyageId != Guid.Empty ? parsedVoyageId.ToString() : "",
+                        ["receiptToken"] = receiptToken // include receipt token in payload
                     });
                 }
             }

@@ -4,6 +4,7 @@ namespace Core.Models.Chat;
 
 public class CreateChatRoomModel
 {
+    public Guid ClientId { get; set; }
     // list of users to be added as participants
     public List<CreateChatRoomParticipantModel> ParticipantModels { get; set; } = [];
     public required string Title { get; set; }

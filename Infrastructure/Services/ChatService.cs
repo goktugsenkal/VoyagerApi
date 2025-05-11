@@ -194,10 +194,12 @@ public class ChatService(IChatRepository chatRepository,
     public async Task SaveMessageAsync(Guid messageId, Guid roomId, Guid senderId, string text, Guid? voyageId = null)
     {
         var chatRoom = await chatRepository.GetChatRoomByIdAsync(roomId);
+        
         if (chatRoom is null)
         {
             throw new ChatRoomNotFoundException(roomId);
         }
+        
         var message = new Message
         {
             Id = Guid.NewGuid(),

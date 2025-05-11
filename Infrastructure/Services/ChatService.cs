@@ -188,6 +188,11 @@ public class ChatService(IChatRepository chatRepository,
         await chatRepository.SaveChangesAsync();
     }
 
+    public async Task<ChatUser?> GetChatUserAsync(Guid userId)
+    {
+        return await chatRepository.GetChatUserByIdAsync(userId);
+    }
+
     // ________________
     // chat hub methods
     // ________________

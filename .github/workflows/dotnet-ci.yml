@@ -89,7 +89,7 @@ jobs:
           cp \$TMP_CONFIG_DIR/production.json Api/appsettings.json
 
           echo 'Running database migrations for MASTER...'
-          ASPNETCORE_ENVIRONMENT=Production dotnet ef database update -s Api/ -p Infrastructure/ --no-build
+          ASPNETCORE_ENVIRONMENT=Production dotnet ef database update -s Api/ -p Infrastructure/
 
           echo 'Restarting MASTER service...'
           sudo systemctl restart voyager.service

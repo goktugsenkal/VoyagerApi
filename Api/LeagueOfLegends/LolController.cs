@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.LeagueOfLegends;
@@ -46,6 +47,7 @@ public class LolController : ControllerBase
     }
 
     [HttpGet("accounts/{name}/{tagLine}")]
+    [DisableCors]
     public async Task<IActionResult> GetSummonerByName(string name, string tagLine)
     {
         var url = $"https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{name}/{tagLine}";
@@ -58,6 +60,7 @@ public class LolController : ControllerBase
     }
     
     [HttpGet("matches/{puuid}/{count:int}")]
+    [DisableCors]
     public async Task<IActionResult> GetMatchIds(string puuid, int count)
     {
         var url = $"https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?start=0&count={count}";
@@ -70,6 +73,7 @@ public class LolController : ControllerBase
     }
     
     [HttpGet("match/{matchId}")]
+    [DisableCors]
     public async Task<IActionResult> GetMatchDetails(string matchId)
     {
         var url = $"https://europe.api.riotgames.com/lol/match/v5/matches/{matchId}";

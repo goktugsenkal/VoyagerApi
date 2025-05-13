@@ -45,14 +45,34 @@ public class LolController : ControllerBase
         return Content(matchContent, "application/json");
     }
 
-    // Fetch match details by match ID
-    [HttpGet("match/{region}/{matchId}")]
-    public async Task<IActionResult> GetMatchById(string region, string matchId)
+    [HttpGet("accounts/{name}/{tagLine}")]
+    public async Task<IActionResult> GetSummonerByName(string name, string tagLine)
     {
-        if (string.IsNullOrWhiteSpace(region) || string.IsNullOrWhiteSpace(matchId))
-            return BadRequest("Region and matchId are required.");
+        var url = $"https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{name}/{tagLine}";
+        var resp = await _httpClient.GetAsync(url);
+        if (!resp.IsSuccessStatusCode)
+            return StatusCode((int)resp.StatusCode, await resp.Content.ReadAsStringAsync());
 
-        var url = $"https://{region}.api.riotgames.com/lol/match/v5/matches/{matchId}";
+        var content = await resp.Content.ReadAsStringAsync();
+        return Content(content, "application/json");
+    }
+    
+    [HttpGet("matches/{puuid}/{count:int}")]
+    public async Task<IActionResult> GetMatchIds(string puuid, int count)
+    {
+        var url = $"https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?start=0&count={count}";
+        var resp = await _httpClient.GetAsync(url);
+        if (!resp.IsSuccessStatusCode)
+            return StatusCode((int)resp.StatusCode, await resp.Content.ReadAsStringAsync());
+
+        var content = await resp.Content.ReadAsStringAsync();
+        return Content(content, "application/json");
+    }
+    
+    [HttpGet("match/{matchId}")]
+    public async Task<IActionResult> GetMatchDetails(string matchId)
+    {
+        var url = $"https://europe.api.riotgames.com/lol/match/v5/matches/{matchId}";
         var resp = await _httpClient.GetAsync(url);
         if (!resp.IsSuccessStatusCode)
             return StatusCode((int)resp.StatusCode, await resp.Content.ReadAsStringAsync());

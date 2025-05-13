@@ -3,6 +3,7 @@ using Core.Exceptions;
 using Core.Interfaces;
 using Core.Interfaces.Data;
 using Core.Interfaces.Services;
+using FirebaseAdmin.Messaging;
 using Infrastructure.Services.Data;
 using Microsoft.AspNetCore.SignalR;
 
@@ -24,7 +25,7 @@ public class ChatHub(
     /// </summary>
     public override async Task OnConnectedAsync()
     {
-        // Extract user ID from JWT claims
+        // extract user ID from JWT claims
         var userIdStr = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdStr, out var userId))
         {
@@ -32,24 +33,24 @@ public class ChatHub(
             return;
         }
 
-        // Add to Redis presence
+        // add to Redis presence
         await redisService.AddOnlineUserAsync(userId);
 
-        // Automatically join all chat rooms user is a member of
+        // automatically join all chat rooms user is a member of
         var chatRoomIds = await chatService.GetChatRoomIdsForUserAsync(userId);
         foreach (var roomId in chatRoomIds)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
         }
 
-        // Notify others user is online
+        // notify others user is online
         await Clients.Others.SendAsync("UserOnline", userId);
 
         await base.OnConnectedAsync();
     }
 
     /// <summary>
-    /// Called when a client disconnects. Broadcasts presence to all users.
+    /// called when a client disconnects. Broadcasts presence to all users.
     /// </summary>
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
@@ -193,6 +194,10 @@ public class ChatHub(
         {
             Console.WriteLine(e);
             throw;
+        }
+        catch (FirebaseMessagingException e)
+        {
+            Console.WriteLine(e);
         }
         catch (ChatRoomNotFoundException e)
         {

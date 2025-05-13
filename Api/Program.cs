@@ -118,6 +118,8 @@ try
                 },
             };
         });
+    
+    builder.Services.AddHttpClient(); // todo: remove
 
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<IVoyageRepository, VoyageRepository>();
